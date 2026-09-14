@@ -1,10 +1,9 @@
 import os
 
+import matplotlib.pyplot as plt
 import pandas as pd
 import psycopg
-import matplotlib.pyplot as plt
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -30,12 +29,12 @@ SELECT
     temperature,
     vibration,
     speed,
-    current
+    current,
+    condition
 FROM telemetry
 ORDER BY timestamp ASC
 LIMIT 1000;
 """
-
 
 df = pd.read_sql(query, connection)
 
@@ -51,47 +50,61 @@ print(df.head())
 print("\nDATA INFORMATION")
 df.info()
 
-print("\nSTATISTICS")
+print("\nDESCRIPTIVE STATISTICS")
 print(df.describe())
 
+print("\nROWS PER CONDITION")
+print(df["condition"].value_counts())
+
+print("\nAVERAGE VALUES BY CONDITION")
+avg_by_condition = df.groupby("condition")[
+    ["temperature", "vibration", "speed", "current"]
+].mean()
+print(avg_by_condition)
+
 
 # -----------------------------
-# TEMPERATURE GRAPH
+# GRAPH 1: Temperature by Conveyor Condition
 # -----------------------------
 plt.figure(figsize=(10, 5))
-
-plt.plot(
-    df["timestamp"],
-    df["temperature"]
-)
+for condition, group in df.groupby("condition"):
+    plt.scatter(group["timestamp"], group["temperature"], label=condition, alpha=0.7)
 
 plt.xlabel("Time")
 plt.ylabel("Temperature")
-plt.title("Conveyor Temperature Over Time")
-
+plt.title("Temperature by Conveyor Condition")
 plt.xticks(rotation=45)
-
+plt.legend()
 plt.tight_layout()
-
 plt.show()
 
 
 # -----------------------------
-# VIBRATION GRAPH
+# GRAPH 2: Vibration by Conveyor Condition
 # -----------------------------
 plt.figure(figsize=(10, 5))
-
-plt.plot(
-    df["timestamp"],
-    df["vibration"]
-)
+for condition, group in df.groupby("condition"):
+    plt.scatter(group["timestamp"], group["vibration"], label=condition, alpha=0.7)
 
 plt.xlabel("Time")
 plt.ylabel("Vibration")
-plt.title("Conveyor Vibration Over Time")
-
+plt.title("Vibration by Conveyor Condition")
 plt.xticks(rotation=45)
-
+plt.legend()
 plt.tight_layout()
+plt.show()
 
+
+# -----------------------------
+# GRAPH 3: Vibration vs Current by Condition
+# -----------------------------
+plt.figure(figsize=(8, 6))
+for condition, group in df.groupby("condition"):
+    plt.scatter(group["vibration"], group["current"], label=condition, alpha=0.7)
+
+plt.xlabel("Vibration")
+plt.ylabel("Current")
+plt.title("Vibration vs Current by Condition")
+plt.legend()
+plt.tight_layout()
 plt.show()

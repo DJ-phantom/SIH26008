@@ -10,6 +10,7 @@ data = {
     "vibration": 3.5,
     "speed": 1.3,
     "current": 2.2,
+    "condition": "NORMAL",
 }
 
 save_telemetry(data)

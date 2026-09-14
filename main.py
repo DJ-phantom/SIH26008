@@ -5,8 +5,9 @@ from threading import Lock
 
 import paho.mqtt.client as mqtt
 from fastapi import FastAPI, Query
+from fastapi.middleware.cors import CORSMiddleware
 
-from db import save_telemetry, get_recent_telemetry
+from db import save_telemetry, get_recent_telemetry, get_telemetry_by_condition
 
 
 BROKER = "localhost"
@@ -63,6 +64,9 @@ def on_message(client, userdata, message):
                 timezone.utc
             ).isoformat()
 
+        if "condition" not in data:
+            data["condition"] = "NORMAL"
+
         with data_lock:
             latest_telemetry.clear()
             latest_telemetry.update(data)
@@ -105,6 +109,19 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3001",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 
 @app.get("/")
 def root():
@@ -129,6 +146,9 @@ def get_latest():
 
 @app.get("/telemetry/history")
 def get_history(
-    limit: int = Query(default=50, ge=1, le=500)
+    limit: int = Query(default=50, ge=1, le=500),
+    condition: str | None = Query(default=None, description="Optional condition filter"),
 ):
+    if condition:
+        return get_telemetry_by_condition(condition, limit)
     return get_recent_telemetry(limit)

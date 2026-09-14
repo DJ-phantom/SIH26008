@@ -4,6 +4,7 @@ import psycopg
 from dotenv import load_dotenv
 
 
+# Load variables from .env
 load_dotenv()
 
 
@@ -16,7 +17,11 @@ DB_CONFIG = {
 }
 
 
+# --------------------------------------------------
+# SAVE ONE TELEMETRY RECORD
+# --------------------------------------------------
 def save_telemetry(data):
+
     query = """
         INSERT INTO telemetry (
             conveyor_id,
@@ -24,26 +29,37 @@ def save_telemetry(data):
             temperature,
             vibration,
             speed,
-            current
+            current,
+            condition
         )
-        VALUES (%s, %s, %s, %s, %s, %s)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)
     """
 
     values = (
-        data["conveyor_id"],
-        data["timestamp"],
-        data["temperature"],
-        data["vibration"],
-        data["speed"],
-        data["current"],
+        data.get("conveyor_id", "BC01"),
+        data.get("timestamp"),
+        data.get("temperature"),
+        data.get("vibration"),
+        data.get("speed"),
+        data.get("current"),
+        data.get("condition", "NORMAL"),
     )
 
     with psycopg.connect(**DB_CONFIG) as connection:
+
         with connection.cursor() as cursor:
-            cursor.execute(query, values)
+
+            cursor.execute(
+                query,
+                values
+            )
 
 
+# --------------------------------------------------
+# GET RECENT TELEMETRY
+# --------------------------------------------------
 def get_recent_telemetry(limit=50):
+
     query = """
         SELECT
             id,
@@ -52,16 +68,24 @@ def get_recent_telemetry(limit=50):
             temperature,
             vibration,
             speed,
-            current
+            current,
+            condition
         FROM telemetry
         ORDER BY timestamp DESC
         LIMIT %s
     """
 
     with psycopg.connect(**DB_CONFIG) as connection:
+
         with connection.cursor() as cursor:
-            cursor.execute(query, (limit,))
+
+            cursor.execute(
+                query,
+                (limit,)
+            )
+
             rows = cursor.fetchall()
+
 
     return [
         {
@@ -72,6 +96,57 @@ def get_recent_telemetry(limit=50):
             "vibration": row[4],
             "speed": row[5],
             "current": row[6],
+            "condition": row[7],
         }
+
+        for row in rows
+    ]
+
+
+# --------------------------------------------------
+# GET TELEMETRY BY CONDITION
+# --------------------------------------------------
+def get_telemetry_by_condition(condition, limit=100):
+
+    query = """
+        SELECT
+            id,
+            conveyor_id,
+            timestamp,
+            temperature,
+            vibration,
+            speed,
+            current,
+            condition
+        FROM telemetry
+        WHERE condition = %s
+        ORDER BY timestamp DESC
+        LIMIT %s
+    """
+
+    with psycopg.connect(**DB_CONFIG) as connection:
+
+        with connection.cursor() as cursor:
+
+            cursor.execute(
+                query,
+                (condition, limit)
+            )
+
+            rows = cursor.fetchall()
+
+
+    return [
+        {
+            "id": row[0],
+            "conveyor_id": row[1],
+            "timestamp": row[2],
+            "temperature": row[3],
+            "vibration": row[4],
+            "speed": row[5],
+            "current": row[6],
+            "condition": row[7],
+        }
+
         for row in rows
     ]
