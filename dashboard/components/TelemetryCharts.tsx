@@ -43,16 +43,16 @@ export const TelemetryCharts: React.FC<TelemetryChartsProps> = ({ history }) => 
     if (active && payload && payload.length) {
       const data = payload[0].payload;
       return (
-        <div className="bg-slate-900 border border-slate-700 p-2.5 rounded-lg shadow-xl text-xs font-mono">
-          <p className="text-slate-400 mb-1">Time: {label}</p>
+        <div className="bg-white border border-slate-200/90 p-2.5 rounded-lg shadow-md text-xs font-mono">
+          <p className="text-slate-500 mb-1">Time: {label}</p>
           {payload.map((entry: any, index: number) => (
             <p key={`item-${index}`} style={{ color: entry.color }} className="font-semibold">
               {entry.name}: {typeof entry.value === "number" ? entry.value.toFixed(2) : entry.value}
             </p>
           ))}
           {data.condition && (
-            <p className="text-slate-300 mt-1 pt-1 border-t border-slate-800 text-[10px]">
-              Condition: <strong className="text-cyan-400">{data.condition}</strong>
+            <p className="text-slate-600 mt-1 pt-1 border-t border-slate-100 text-[10px]">
+              Condition: <strong className="text-slate-800">{data.condition}</strong>
             </p>
           )}
         </div>
@@ -63,66 +63,66 @@ export const TelemetryCharts: React.FC<TelemetryChartsProps> = ({ history }) => 
 
   if (chartData.length === 0) {
     return (
-      <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-8 text-center text-slate-500">
+      <div className="bg-white border border-slate-200/90 rounded-xl p-8 text-center text-slate-500 shadow-xs">
         <p className="text-sm">No historical telemetry available yet. Waiting for sensor packets...</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg shadow-black/20">
+    <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs">
       {/* Header & Metric Tabs */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-cyan-950/70 border border-cyan-800/60 text-cyan-400">
-            <ChartIcon className="w-5 h-5" />
+          <div className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
+            <ChartIcon className="w-5 h-5 text-sky-600" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-100">Live Telemetry Trends</h2>
-            <p className="text-xs text-slate-400">
+            <h2 className="text-base font-bold text-slate-900">Live Telemetry Trends</h2>
+            <p className="text-xs text-slate-500">
               Real-time time-series buffer ({chartData.length} records)
             </p>
           </div>
         </div>
 
         {/* Tab Controls */}
-        <div className="flex items-center gap-1 bg-slate-950 p-1 rounded-lg border border-slate-800 self-start sm:self-auto text-xs font-medium">
+        <div className="flex items-center gap-1 bg-slate-100/90 p-1 rounded-lg border border-slate-200/90 self-start sm:self-auto text-xs font-medium">
           <button
             onClick={() => setActiveTab("all")}
-            className={`px-3 py-1 rounded-md transition-all ${
-              activeTab === "all" ? "bg-slate-800 text-cyan-400 shadow-sm" : "text-slate-400 hover:text-slate-200"
+            className={`px-2.5 py-1 rounded-md transition-all ${
+              activeTab === "all" ? "bg-white text-slate-900 shadow-xs border border-slate-200 font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             All Metrics
           </button>
           <button
             onClick={() => setActiveTab("temperature")}
-            className={`px-3 py-1 rounded-md transition-all ${
-              activeTab === "temperature" ? "bg-rose-950/70 text-rose-300 border border-rose-800/60" : "text-slate-400 hover:text-slate-200"
+            className={`px-2.5 py-1 rounded-md transition-all ${
+              activeTab === "temperature" ? "bg-rose-50 text-rose-800 border border-rose-200 font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Temperature
           </button>
           <button
             onClick={() => setActiveTab("vibration")}
-            className={`px-3 py-1 rounded-md transition-all ${
-              activeTab === "vibration" ? "bg-cyan-950/70 text-cyan-300 border border-cyan-800/60" : "text-slate-400 hover:text-slate-200"
+            className={`px-2.5 py-1 rounded-md transition-all ${
+              activeTab === "vibration" ? "bg-sky-50 text-sky-800 border border-sky-200 font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Vibration
           </button>
           <button
             onClick={() => setActiveTab("speed")}
-            className={`px-3 py-1 rounded-md transition-all ${
-              activeTab === "speed" ? "bg-emerald-950/70 text-emerald-300 border border-emerald-800/60" : "text-slate-400 hover:text-slate-200"
+            className={`px-2.5 py-1 rounded-md transition-all ${
+              activeTab === "speed" ? "bg-emerald-50 text-emerald-800 border border-emerald-200 font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Speed
           </button>
           <button
             onClick={() => setActiveTab("current")}
-            className={`px-3 py-1 rounded-md transition-all ${
-              activeTab === "current" ? "bg-amber-950/70 text-amber-300 border border-amber-800/60" : "text-slate-400 hover:text-slate-200"
+            className={`px-2.5 py-1 rounded-md transition-all ${
+              activeTab === "current" ? "bg-amber-50 text-amber-800 border border-amber-200 font-semibold" : "text-slate-600 hover:text-slate-900"
             }`}
           >
             Current
@@ -133,110 +133,110 @@ export const TelemetryCharts: React.FC<TelemetryChartsProps> = ({ history }) => 
       {/* Charts Grid or Focused Chart */}
       <div className="mt-5">
         {activeTab === "all" ? (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {/* Chart 1: Temperature */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Bearing Temperature (°C)
                 </span>
-                <span className="text-[11px] text-rose-400 font-mono">Nominal: 30 - 35°C</span>
+                <span className="text-[11px] text-rose-700 font-mono">Nominal: 30 - 35°C</span>
               </div>
-              <div className="h-48 w-full">
+              <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.4} />
+                        <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
                         <stop offset="95%" stopColor="#f43f5e" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
-                    <YAxis domain={["auto", "auto"]} stroke="#64748b" tick={{ fontSize: 10 }} />
+                    <CartesianGrid strokeDasharray="2 2" stroke="#e2e8f0" />
+                    <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
+                    <YAxis domain={["auto", "auto"]} stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="temperature" name="Temperature (°C)" stroke="#f43f5e" strokeWidth={2} fillOpacity={1} fill="url(#colorTemp)" />
+                    <Area type="monotone" dataKey="temperature" name="Temperature (°C)" stroke="#e11d48" strokeWidth={1.8} fillOpacity={1} fill="url(#colorTemp)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Chart 2: Vibration */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Vibration Velocity (mm/s)
                 </span>
-                <span className="text-[11px] text-cyan-400 font-mono">Nominal: 1.5 - 2.5 mm/s</span>
+                <span className="text-[11px] text-sky-700 font-mono">Nominal: 1.5 - 2.5 mm/s</span>
               </div>
-              <div className="h-48 w-full">
+              <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="colorVib" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#06b6d4" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#06b6d4" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="#0284c7" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#0284c7" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
-                    <YAxis domain={["auto", "auto"]} stroke="#64748b" tick={{ fontSize: 10 }} />
+                    <CartesianGrid strokeDasharray="2 2" stroke="#e2e8f0" />
+                    <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
+                    <YAxis domain={["auto", "auto"]} stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="vibration" name="Vibration (mm/s)" stroke="#06b6d4" strokeWidth={2} fillOpacity={1} fill="url(#colorVib)" />
+                    <Area type="monotone" dataKey="vibration" name="Vibration (mm/s)" stroke="#0284c7" strokeWidth={1.8} fillOpacity={1} fill="url(#colorVib)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Chart 3: Belt Speed */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Belt Linear Speed (m/s)
                 </span>
-                <span className="text-[11px] text-emerald-400 font-mono">Nominal: 1.35 - 1.45 m/s</span>
+                <span className="text-[11px] text-emerald-700 font-mono">Nominal: 1.35 - 1.45 m/s</span>
               </div>
-              <div className="h-48 w-full">
+              <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="colorSpeed" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#10b981" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="#059669" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#059669" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
-                    <YAxis domain={["auto", "auto"]} stroke="#64748b" tick={{ fontSize: 10 }} />
+                    <CartesianGrid strokeDasharray="2 2" stroke="#e2e8f0" />
+                    <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
+                    <YAxis domain={["auto", "auto"]} stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="speed" name="Speed (m/s)" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorSpeed)" />
+                    <Area type="monotone" dataKey="speed" name="Speed (m/s)" stroke="#059669" strokeWidth={1.8} fillOpacity={1} fill="url(#colorSpeed)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
             {/* Chart 4: Motor Current */}
-            <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-4">
+            <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-4">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">
+                <span className="text-xs font-semibold text-slate-700 uppercase tracking-wider">
                   Motor Current (A)
                 </span>
-                <span className="text-[11px] text-amber-400 font-mono">Nominal: 1.4 - 1.8 A</span>
+                <span className="text-[11px] text-amber-700 font-mono">Nominal: 1.4 - 1.8 A</span>
               </div>
-              <div className="h-48 w-full">
+              <div className="h-44 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="colorCurrent" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0.0} />
+                        <stop offset="5%" stopColor="#d97706" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#d97706" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                    <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 10 }} />
-                    <YAxis domain={["auto", "auto"]} stroke="#64748b" tick={{ fontSize: 10 }} />
+                    <CartesianGrid strokeDasharray="2 2" stroke="#e2e8f0" />
+                    <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
+                    <YAxis domain={["auto", "auto"]} stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
                     <Tooltip content={<CustomTooltip />} />
-                    <Area type="monotone" dataKey="current" name="Current (A)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorCurrent)" />
+                    <Area type="monotone" dataKey="current" name="Current (A)" stroke="#d97706" strokeWidth={1.8} fillOpacity={1} fill="url(#colorCurrent)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -244,8 +244,8 @@ export const TelemetryCharts: React.FC<TelemetryChartsProps> = ({ history }) => 
           </div>
         ) : (
           /* Focused Single Metric Large Chart */
-          <div className="bg-slate-950/60 border border-slate-800/80 rounded-xl p-5">
-            <div className="h-80 w-full">
+          <div className="bg-slate-50/70 border border-slate-200/80 rounded-xl p-5">
+            <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartData}>
                   <defs>
@@ -254,33 +254,33 @@ export const TelemetryCharts: React.FC<TelemetryChartsProps> = ({ history }) => 
                         offset="5%"
                         stopColor={
                           activeTab === "temperature"
-                            ? "#f43f5e"
+                            ? "#e11d48"
                             : activeTab === "vibration"
-                            ? "#06b6d4"
+                            ? "#0284c7"
                             : activeTab === "speed"
-                            ? "#10b981"
-                            : "#f59e0b"
+                            ? "#059669"
+                            : "#d97706"
                         }
-                        stopOpacity={0.4}
+                        stopOpacity={0.2}
                       />
                       <stop
                         offset="95%"
                         stopColor={
                           activeTab === "temperature"
-                            ? "#f43f5e"
+                            ? "#e11d48"
                             : activeTab === "vibration"
-                            ? "#06b6d4"
+                            ? "#0284c7"
                             : activeTab === "speed"
-                            ? "#10b981"
-                            : "#f59e0b"
+                            ? "#059669"
+                            : "#d97706"
                         }
                         stopOpacity={0.0}
                       />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis dataKey="time" stroke="#64748b" tick={{ fontSize: 11 }} />
-                  <YAxis domain={["auto", "auto"]} stroke="#64748b" tick={{ fontSize: 11 }} />
+                  <CartesianGrid strokeDasharray="2 2" stroke="#e2e8f0" />
+                  <XAxis dataKey="time" stroke="#94a3b8" tick={{ fontSize: 11, fill: "#64748b" }} />
+                  <YAxis domain={["auto", "auto"]} stroke="#94a3b8" tick={{ fontSize: 11, fill: "#64748b" }} />
                   <Tooltip content={<CustomTooltip />} />
                   <Area
                     type="monotone"
@@ -288,14 +288,14 @@ export const TelemetryCharts: React.FC<TelemetryChartsProps> = ({ history }) => 
                     name={activeTab.toUpperCase()}
                     stroke={
                       activeTab === "temperature"
-                        ? "#f43f5e"
+                        ? "#e11d48"
                         : activeTab === "vibration"
-                        ? "#06b6d4"
+                        ? "#0284c7"
                         : activeTab === "speed"
-                        ? "#10b981"
-                        : "#f59e0b"
+                        ? "#059669"
+                        : "#d97706"
                     }
-                    strokeWidth={2.5}
+                    strokeWidth={2}
                     fillOpacity={1}
                     fill="url(#colorFocused)"
                   />
