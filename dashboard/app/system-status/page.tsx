@@ -192,28 +192,28 @@ export default function SystemStatusPage() {
     switch (status) {
       case "ONLINE":
         return {
-          badge: "bg-emerald-950/80 text-emerald-300 border-emerald-700",
-          icon: <CheckCircle2 className="w-4 h-4 text-emerald-400" />,
-          dot: "bg-emerald-400",
+          badge: "bg-emerald-50 text-emerald-800 border-emerald-200/80",
+          icon: <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />,
+          dot: "bg-emerald-500",
         };
       case "DEGRADED":
         return {
-          badge: "bg-amber-950/80 text-amber-300 border-amber-700",
-          icon: <AlertTriangle className="w-4 h-4 text-amber-400" />,
-          dot: "bg-amber-400",
+          badge: "bg-amber-50 text-amber-800 border-amber-200/80",
+          icon: <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />,
+          dot: "bg-amber-500",
         };
       case "OFFLINE":
         return {
-          badge: "bg-rose-950/80 text-rose-300 border-rose-700",
-          icon: <XCircle className="w-4 h-4 text-rose-400" />,
+          badge: "bg-rose-50 text-rose-800 border-rose-200/80",
+          icon: <XCircle className="w-3.5 h-3.5 text-rose-600" />,
           dot: "bg-rose-500",
         };
       case "NOT CONFIGURED":
       default:
         return {
-          badge: "bg-slate-800 text-slate-400 border-slate-700",
-          icon: <HelpCircle className="w-4 h-4 text-slate-400" />,
-          dot: "bg-slate-500",
+          badge: "bg-slate-100 text-slate-600 border-slate-200",
+          icon: <HelpCircle className="w-3.5 h-3.5 text-slate-400" />,
+          dot: "bg-slate-400",
         };
     }
   };
@@ -222,7 +222,7 @@ export default function SystemStatusPage() {
   const configuredCount = services.filter((s) => s.status !== "NOT CONFIGURED").length;
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#f4f5f7] text-slate-900 flex flex-col font-sans">
       {/* Header */}
       <Header
         conveyorId="BC01"
@@ -232,18 +232,18 @@ export default function SystemStatusPage() {
         lastUpdated={checkTime || "Monitoring"}
       />
 
-      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 space-y-5">
+      <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 space-y-4">
         {/* Title Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-xl p-4.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/80 rounded-xl p-4 sm:p-5 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-cyan-950/70 border border-cyan-800/60 text-cyan-400">
+            <div className="p-2.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
               <Server className="w-5 h-5" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-100">
+              <h1 className="text-base font-semibold text-slate-900 tracking-tight">
                 Infrastructure & System Health
               </h1>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500 mt-0.5">
                 Real-time connection verification across MQTT broker, FastAPI backend, PostgreSQL, and sensor pipelines
               </p>
             </div>
@@ -253,27 +253,27 @@ export default function SystemStatusPage() {
             <button
               onClick={checkServices}
               disabled={isChecking}
-              className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition-all disabled:opacity-50"
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium transition-all disabled:opacity-50 shadow-xs cursor-pointer"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${isChecking ? "animate-spin text-cyan-400" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isChecking ? "animate-spin text-slate-800" : ""}`} />
               <span>{isChecking ? "Checking Pipeline..." : "Re-Check Status"}</span>
             </button>
           </div>
         </div>
 
         {/* Pipeline Summary Bar */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+        <div className="bg-white border border-slate-200/80 rounded-xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shadow-xs">
           <div className="flex items-center gap-3">
             <span
-              className={`w-3 h-3 rounded-full ${
-                onlineCount >= 4 ? "bg-emerald-400 animate-ping" : "bg-amber-400 animate-pulse"
+              className={`w-2.5 h-2.5 rounded-full ${
+                onlineCount >= 4 ? "bg-emerald-500 ring-4 ring-emerald-100" : "bg-amber-500 ring-4 ring-amber-100"
               }`}
             />
             <div>
-              <p className="text-xs font-bold text-slate-200">
+              <p className="text-xs font-semibold text-slate-800">
                 {onlineCount} of {configuredCount} Configured Core Services Operational
               </p>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-[11px] text-slate-500 mt-0.5">
                 {isBackendOnline && isMqttOnline
                   ? "Full end-to-end telemetry ingestion pipeline is functional."
                   : "One or more core backend services require attention."}
@@ -281,55 +281,55 @@ export default function SystemStatusPage() {
             </div>
           </div>
 
-          <div className="flex items-center gap-3 text-xs font-mono text-slate-400 bg-slate-950 px-3 py-1.5 rounded-lg border border-slate-800">
-            <span>API Latency: <strong className="text-cyan-300">{apiLatency !== null ? `${apiLatency} ms` : "N/A"}</strong></span>
-            <span>•</span>
-            <span>Last Ping: <strong className="text-slate-200">{checkTime || "--"}</strong></span>
+          <div className="flex items-center gap-2.5 text-xs font-mono text-slate-600 bg-slate-50 border border-slate-200/80 px-3 py-1.5 rounded-lg shrink-0">
+            <span>API Latency: <strong className="text-slate-900 font-semibold">{apiLatency !== null ? `${apiLatency} ms` : "N/A"}</strong></span>
+            <span className="text-slate-300">•</span>
+            <span>Last Ping: <strong className="text-slate-900 font-semibold">{checkTime || "--"}</strong></span>
           </div>
         </div>
 
         {/* Services Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
           {services.map((srv) => {
             const config = getStatusBadge(srv.status);
             return (
               <div
                 key={srv.id}
-                className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 flex flex-col justify-between shadow-lg shadow-black/20 transition-all hover:border-slate-700"
+                className="bg-white border border-slate-200/80 rounded-xl p-4.5 flex flex-col justify-between shadow-xs transition-colors hover:border-slate-300"
               >
                 <div>
-                  <div className="flex items-start justify-between gap-2 mb-2 pb-2 border-b border-slate-800/80">
+                  <div className="flex items-start justify-between gap-2 mb-2 pb-2.5 border-b border-slate-100">
                     <div>
-                      <span className="text-[10px] font-semibold text-cyan-400 uppercase tracking-wider block">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider block">
                         {srv.category}
                       </span>
-                      <h3 className="text-sm font-bold text-slate-100 mt-0.5">{srv.name}</h3>
+                      <h3 className="text-xs font-semibold text-slate-900 mt-0.5">{srv.name}</h3>
                     </div>
                     <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold border flex items-center gap-1 shrink-0 ${config.badge}`}
+                      className={`px-2 py-0.5 rounded text-[10px] font-medium border flex items-center gap-1.5 shrink-0 ${config.badge}`}
                     >
                       <span className={`w-1.5 h-1.5 rounded-full ${config.dot}`} />
                       <span>{srv.status}</span>
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-300 mt-2 mb-3 leading-relaxed">
+                  <p className="text-xs text-slate-600 mt-2 mb-3 leading-relaxed">
                     {srv.details}
                   </p>
                 </div>
 
-                <div className="space-y-1.5 pt-3 border-t border-slate-800/80 text-[11px] font-mono text-slate-400">
+                <div className="space-y-1.5 pt-2.5 border-t border-slate-100 text-[11px] font-mono">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Endpoint / Target:</span>
-                    <span className="text-slate-300 truncate max-w-[180px]">{srv.endpoint}</span>
+                    <span className="text-slate-400">Endpoint:</span>
+                    <span className="text-slate-700 truncate max-w-[180px] font-medium">{srv.endpoint}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Port / Protocol:</span>
-                    <span className="text-slate-300">{srv.port}</span>
+                    <span className="text-slate-400">Port / Proto:</span>
+                    <span className="text-slate-700 font-medium">{srv.port}</span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-500">Health Check:</span>
-                    <span className={srv.isRealCheck ? "text-emerald-400" : "text-slate-500"}>
+                    <span className="text-slate-400">Health Check:</span>
+                    <span className={srv.isRealCheck ? "text-emerald-700 font-medium" : "text-slate-400"}>
                       {srv.isRealCheck ? "Verified Live" : "Phase 2 Staged"}
                     </span>
                   </div>

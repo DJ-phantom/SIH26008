@@ -19,31 +19,31 @@ export const ConveyorSystemView: React.FC<ConveyorSystemViewProps> = ({
   const getCompBadge = (status: "healthy" | "warning" | "critical") => {
     switch (status) {
       case "critical":
-        return "bg-rose-950/90 text-rose-300 border-rose-600 animate-pulse";
+        return "bg-rose-50 text-rose-800 border-rose-200 font-semibold";
       case "warning":
-        return "bg-amber-950/90 text-amber-300 border-amber-600";
+        return "bg-amber-50 text-amber-800 border-amber-200 font-semibold";
       case "healthy":
       default:
-        return "bg-emerald-950/80 text-emerald-300 border-emerald-700/60";
+        return "bg-emerald-50 text-emerald-800 border-emerald-200 font-semibold";
     }
   };
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg shadow-black/20">
+    <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-800">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-4 border-b border-slate-100">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-lg bg-cyan-950/70 border border-cyan-800/60 text-cyan-400">
-            <Eye className="w-5 h-5" />
+          <div className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
+            <Eye className="w-5 h-5 text-sky-600" />
           </div>
           <div>
-            <h2 className="text-base font-bold text-slate-100 flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
               <span>Conveyor System View</span>
-              <span className="text-[11px] font-semibold uppercase bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700">
+              <span className="text-[10px] font-semibold uppercase bg-slate-100 text-slate-600 px-2 py-0.5 rounded border border-slate-200">
                 2D Schematic Panel
               </span>
             </h2>
-            <p className="text-xs text-slate-400">
+            <p className="text-xs text-slate-500">
               Component-level status representation for industrial supervision
             </p>
           </div>
@@ -55,132 +55,132 @@ export const ConveyorSystemView: React.FC<ConveyorSystemViewProps> = ({
       </div>
 
       {/* 2D Schematic Graphic / Flow Representation */}
-      <div className="mt-5 bg-slate-950/80 border border-slate-800/90 rounded-xl p-4 lg:p-6 overflow-x-auto">
+      <div className="mt-5 bg-slate-50/70 border border-slate-200/80 rounded-xl p-4 lg:p-5 overflow-x-auto">
         <div className="min-w-[700px] flex items-center justify-between gap-2 relative">
           {/* Component 1: Tail Pulley */}
           <div
-            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-all duration-300 ${
+            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-colors shadow-xs ${
               comps.tailPulley.status === "warning"
-                ? "border-amber-600/80 bg-amber-950/20"
-                : "border-slate-800 bg-slate-900/60"
+                ? "border-amber-300/80 bg-amber-50/60"
+                : "border-slate-200 bg-white"
             }`}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-slate-600 flex items-center justify-center bg-slate-800 text-slate-300 mb-2">
-              <RotateCw className="w-5 h-5 text-cyan-400" />
+            <div className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50 text-slate-700 mb-1.5 shadow-2xs">
+              <RotateCw className="w-4 h-4 text-slate-600" />
             </div>
-            <span className="text-xs font-bold text-slate-200">Tail Pulley</span>
+            <span className="text-xs font-bold text-slate-800">Tail Pulley</span>
             <span className="text-[10px] text-slate-400 font-mono">Return Zone</span>
-            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] font-semibold border ${getCompBadge(comps.tailPulley.status)}`}>
+            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] border ${getCompBadge(comps.tailPulley.status)}`}>
               {comps.tailPulley.detail}
             </span>
           </div>
 
-          <ChevronRight className="w-4 h-4 text-slate-600 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
 
           {/* Component 2: Splice Joint */}
           <div
-            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-all duration-300 ${
+            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-colors shadow-xs ${
               comps.spliceJoint.status === "critical"
-                ? "border-rose-600/90 bg-rose-950/30"
+                ? "border-rose-300/80 bg-rose-50/60"
                 : comps.spliceJoint.status === "warning"
-                ? "border-amber-600/80 bg-amber-950/20"
-                : "border-slate-800 bg-slate-900/60"
+                ? "border-amber-300/80 bg-amber-50/60"
+                : "border-slate-200 bg-white"
             }`}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-purple-600/70 flex items-center justify-center bg-purple-950/50 text-purple-300 mb-2">
-              <CircleDot className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50 text-slate-700 mb-1.5 shadow-2xs">
+              <CircleDot className="w-4 h-4 text-indigo-600" />
             </div>
-            <span className="text-xs font-bold text-slate-200">Splice Joint</span>
+            <span className="text-xs font-bold text-slate-800">Splice Joint</span>
             <span className="text-[10px] text-slate-400 font-mono">Joint Zone J1</span>
-            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] font-semibold border ${getCompBadge(comps.spliceJoint.status)}`}>
+            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] border ${getCompBadge(comps.spliceJoint.status)}`}>
               {comps.spliceJoint.detail}
             </span>
           </div>
 
-          <ChevronRight className="w-4 h-4 text-slate-600 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
 
           {/* Component 3: Roller / Idler Zone */}
           <div
-            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-all duration-300 ${
+            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-colors shadow-xs ${
               comps.rollerZone.status === "critical"
-                ? "border-rose-600/90 bg-rose-950/30 shadow-lg shadow-rose-900/20"
+                ? "border-rose-300/80 bg-rose-50/60"
                 : comps.rollerZone.status === "warning"
-                ? "border-amber-600/80 bg-amber-950/20"
-                : "border-slate-800 bg-slate-900/60"
+                ? "border-amber-300/80 bg-amber-50/60"
+                : "border-slate-200 bg-white"
             }`}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-cyan-600/70 flex items-center justify-center bg-cyan-950/50 text-cyan-300 mb-2">
-              <Activity className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50 text-slate-700 mb-1.5 shadow-2xs">
+              <Activity className="w-4 h-4 text-sky-600" />
             </div>
-            <span className="text-xs font-bold text-slate-200">Roller Idler Zone</span>
+            <span className="text-xs font-bold text-slate-800">Roller Idler Zone</span>
             <span className="text-[10px] text-slate-400 font-mono">Sensors S1-S3</span>
-            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] font-semibold border ${getCompBadge(comps.rollerZone.status)}`}>
+            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] border ${getCompBadge(comps.rollerZone.status)}`}>
               {comps.rollerZone.detail}
             </span>
           </div>
 
-          <ChevronRight className="w-4 h-4 text-slate-600 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
 
           {/* Component 4: Belt Carry Strand */}
           <div
-            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-all duration-300 ${
+            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-colors shadow-xs ${
               comps.beltStrand.status === "critical"
-                ? "border-purple-600/90 bg-purple-950/30 shadow-lg shadow-purple-900/20"
+                ? "border-rose-300/80 bg-rose-50/60"
                 : comps.beltStrand.status === "warning"
-                ? "border-amber-600/80 bg-amber-950/20"
-                : "border-slate-800 bg-slate-900/60"
+                ? "border-amber-300/80 bg-amber-50/60"
+                : "border-slate-200 bg-white"
             }`}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-emerald-600/70 flex items-center justify-center bg-emerald-950/50 text-emerald-300 mb-2">
-              <Layers className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50 text-slate-700 mb-1.5 shadow-2xs">
+              <Layers className="w-4 h-4 text-emerald-600" />
             </div>
-            <span className="text-xs font-bold text-slate-200">Carry Strand</span>
+            <span className="text-xs font-bold text-slate-800">Carry Strand</span>
             <span className="text-[10px] text-slate-400 font-mono">Steel Cord Belt</span>
-            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] font-semibold border ${getCompBadge(comps.beltStrand.status)}`}>
+            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] border ${getCompBadge(comps.beltStrand.status)}`}>
               {comps.beltStrand.detail}
             </span>
           </div>
 
-          <ChevronRight className="w-4 h-4 text-slate-600 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
 
           {/* Component 5: Drive Pulley */}
           <div
-            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-all duration-300 ${
+            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-colors shadow-xs ${
               comps.drivePulley.status === "critical"
-                ? "border-rose-600/90 bg-rose-950/30"
+                ? "border-rose-300/80 bg-rose-50/60"
                 : comps.drivePulley.status === "warning"
-                ? "border-amber-600/80 bg-amber-950/20"
-                : "border-slate-800 bg-slate-900/60"
+                ? "border-amber-300/80 bg-amber-50/60"
+                : "border-slate-200 bg-white"
             }`}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-amber-600/70 flex items-center justify-center bg-amber-950/50 text-amber-300 mb-2">
-              <RotateCw className="w-5 h-5 text-amber-400" />
+            <div className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50 text-slate-700 mb-1.5 shadow-2xs">
+              <RotateCw className="w-4 h-4 text-amber-600" />
             </div>
-            <span className="text-xs font-bold text-slate-200">Drive Pulley</span>
+            <span className="text-xs font-bold text-slate-800">Drive Pulley</span>
             <span className="text-[10px] text-slate-400 font-mono">Head Discharge</span>
-            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] font-semibold border ${getCompBadge(comps.drivePulley.status)}`}>
+            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] border ${getCompBadge(comps.drivePulley.status)}`}>
               {comps.drivePulley.detail}
             </span>
           </div>
 
-          <ChevronRight className="w-4 h-4 text-slate-600 shrink-0" />
+          <ChevronRight className="w-4 h-4 text-slate-400 shrink-0" />
 
           {/* Component 6: Motor & Gearbox Unit */}
           <div
-            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-all duration-300 ${
+            className={`flex-1 flex flex-col items-center p-3 rounded-lg border transition-colors shadow-xs ${
               comps.motor.status === "critical"
-                ? "border-amber-500/90 bg-amber-950/30 shadow-lg shadow-amber-900/20 animate-pulse"
+                ? "border-amber-400/80 bg-amber-50/60"
                 : comps.motor.status === "warning"
-                ? "border-amber-600/80 bg-amber-950/20"
-                : "border-slate-800 bg-slate-900/60"
+                ? "border-amber-300/80 bg-amber-50/60"
+                : "border-slate-200 bg-white"
             }`}
           >
-            <div className="w-10 h-10 rounded-full border-2 border-blue-600/70 flex items-center justify-center bg-blue-950/50 text-blue-300 mb-2">
-              <HardDrive className="w-5 h-5" />
+            <div className="w-9 h-9 rounded-full border border-slate-200 flex items-center justify-center bg-slate-50 text-slate-700 mb-1.5 shadow-2xs">
+              <HardDrive className="w-4 h-4 text-slate-600" />
             </div>
-            <span className="text-xs font-bold text-slate-200">Motor Unit</span>
+            <span className="text-xs font-bold text-slate-800">Motor Unit</span>
             <span className="text-[10px] text-slate-400 font-mono">3-Phase Drive</span>
-            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] font-semibold border ${getCompBadge(comps.motor.status)}`}>
+            <span className={`mt-2 px-2 py-0.5 rounded text-[10px] border ${getCompBadge(comps.motor.status)}`}>
               {comps.motor.detail}
             </span>
           </div>

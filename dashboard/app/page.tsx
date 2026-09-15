@@ -135,7 +135,7 @@ export default function DashboardPage() {
       : alertHistory.slice(0, 6);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
+    <div className="min-h-screen bg-[#f4f5f7] text-slate-900 flex flex-col font-sans selection:bg-sky-500/20 selection:text-sky-900">
       {/* Header */}
       <Header
         conveyorId={latestData?.conveyor_id || "BC01"}
@@ -149,18 +149,18 @@ export default function DashboardPage() {
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 space-y-5">
         {/* Backend Offline Banner */}
         {!isBackendConnected && (
-          <div className="bg-rose-950/40 border border-rose-800/80 rounded-xl p-4 flex items-center justify-between gap-3 text-rose-200 text-sm">
+          <div className="bg-rose-50 border border-rose-200/90 rounded-xl p-4 flex items-center justify-between gap-3 text-rose-900 text-sm shadow-xs">
             <div className="flex items-center gap-3">
-              <WifiOff className="w-5 h-5 text-rose-400 shrink-0 animate-bounce" />
+              <WifiOff className="w-5 h-5 text-rose-600 shrink-0" />
               <div>
-                <p className="font-bold text-rose-100">FastAPI Backend is Offline</p>
-                <p className="text-xs text-rose-300/80">
-                  Ensure FastAPI is running on port 8000 (<code className="bg-rose-900/50 px-1 py-0.5 rounded font-mono">uvicorn main:app --reload</code>). Auto-reconnecting...
+                <p className="font-bold text-rose-900">FastAPI Backend is Offline</p>
+                <p className="text-xs text-rose-700">
+                  Ensure FastAPI is running on port 8000 (<code className="bg-rose-100/80 px-1 py-0.5 rounded font-mono">uvicorn main:app --reload</code>). Auto-reconnecting...
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1 text-xs text-rose-400 font-mono">
-              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+            <div className="flex items-center gap-1.5 text-xs text-rose-700 font-mono">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin text-rose-600" />
               <span>Polling</span>
             </div>
           </div>
@@ -229,31 +229,31 @@ export default function DashboardPage() {
         </div>
 
         {/* SIH Architecture Demo Pipeline Roadmap Box */}
-        <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 text-xs text-slate-400">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-800/80">
-            <span className="font-bold text-slate-200 uppercase tracking-wider">
+        <div className="bg-white border border-slate-200/90 rounded-xl p-4.5 text-xs text-slate-600 shadow-xs">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2.5 pb-2 border-b border-slate-100">
+            <span className="font-bold text-slate-800 uppercase tracking-wider">
               Data Pipeline & Architecture Overview
             </span>
-            <span className="text-[11px] font-mono text-cyan-400">Smart India Hackathon SIH26008</span>
+            <span className="text-[11px] font-mono text-slate-500">Smart India Hackathon SIH26008</span>
           </div>
-          <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-slate-300">
-            <span className="bg-slate-800 px-2 py-1 rounded text-cyan-300 border border-slate-700">Simulated ESP32 Telemetry</span>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600" />
-            <span className="bg-slate-800 px-2 py-1 rounded text-emerald-300 border border-slate-700">Mosquitto MQTT (1883)</span>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600" />
-            <span className="bg-slate-800 px-2 py-1 rounded text-cyan-300 border border-slate-700">FastAPI Async Subscriber</span>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600" />
-            <span className="bg-slate-800 px-2 py-1 rounded text-purple-300 border border-slate-700">PostgreSQL (sih26008)</span>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600" />
-            <span className="bg-slate-800 px-2 py-1 rounded text-amber-300 border border-slate-700">Health Engine</span>
-            <ArrowRight className="w-3.5 h-3.5 text-slate-600" />
-            <span className="bg-cyan-950 px-2 py-1 rounded text-cyan-200 border border-cyan-800 font-bold">Next.js Live Dashboard</span>
+          <div className="flex flex-wrap items-center gap-2 font-mono text-[11px] text-slate-600">
+            <span className="bg-slate-50 px-2 py-1 rounded text-slate-700 border border-slate-200">Simulated ESP32 Telemetry</span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="bg-slate-50 px-2 py-1 rounded text-emerald-800 border border-slate-200">Mosquitto MQTT (1883)</span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="bg-slate-50 px-2 py-1 rounded text-sky-800 border border-slate-200">FastAPI Async Subscriber</span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="bg-slate-50 px-2 py-1 rounded text-indigo-800 border border-slate-200">PostgreSQL (sih26008)</span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="bg-slate-50 px-2 py-1 rounded text-amber-800 border border-slate-200">Health Engine</span>
+            <ArrowRight className="w-3.5 h-3.5 text-slate-400" />
+            <span className="bg-sky-50 px-2 py-1 rounded text-sky-800 border border-sky-200 font-bold">Next.js Live Dashboard</span>
           </div>
         </div>
       </main>
 
       {/* Footer */}
-      <footer className="w-full bg-slate-950 border-t border-slate-900 py-3 px-6 text-center text-xs text-slate-600">
+      <footer className="w-full bg-white/70 border-t border-slate-200/90 py-3.5 px-6 text-center text-xs text-slate-500 font-medium">
         SIH26008 • Intelligent Monitoring and Prediction of Conveyor Belt Joint Rupture & Damage • NMDC Mining Problem Statement
       </footer>
     </div>

@@ -19,44 +19,44 @@ export const ConditionBanner: React.FC<ConditionBannerProps> = ({
     switch (normCondition) {
       case "OVERLOAD":
         return {
-          icon: <Zap className="w-5 h-5 text-amber-400" />,
+          icon: <Zap className="w-5 h-5 text-amber-600" />,
           title: "OVERLOAD CONDITION",
-          badgeColor: "bg-amber-950/80 text-amber-300 border-amber-700",
-          bannerBg: "bg-amber-950/20 border-amber-800/40",
-          riskBadge: "bg-amber-900/60 text-amber-300 border-amber-700",
+          badgeColor: "bg-amber-100/80 text-amber-900 border-amber-300/80",
+          bannerBg: "bg-amber-50/70 border-amber-200/90",
+          riskBadge: "bg-amber-100/70 text-amber-900 border-amber-300/70",
         };
       case "MISALIGNMENT":
         return {
-          icon: <AlertCircle className="w-5 h-5 text-purple-400" />,
+          icon: <AlertCircle className="w-5 h-5 text-indigo-600" />,
           title: "BELT MISALIGNMENT",
-          badgeColor: "bg-purple-950/80 text-purple-300 border-purple-700",
-          bannerBg: "bg-purple-950/20 border-purple-800/40",
-          riskBadge: "bg-purple-900/60 text-purple-300 border-purple-700",
+          badgeColor: "bg-indigo-100/80 text-indigo-900 border-indigo-300/80",
+          bannerBg: "bg-indigo-50/70 border-indigo-200/90",
+          riskBadge: "bg-indigo-100/70 text-indigo-900 border-indigo-300/70",
         };
       case "ROLLER_FAULT":
         return {
-          icon: <Wrench className="w-5 h-5 text-rose-400" />,
+          icon: <Wrench className="w-5 h-5 text-rose-600" />,
           title: "ROLLER BEARING FAULT",
-          badgeColor: "bg-rose-950/80 text-rose-300 border-rose-700",
-          bannerBg: "bg-rose-950/20 border-rose-800/40",
-          riskBadge: "bg-rose-900/60 text-rose-300 border-rose-700",
+          badgeColor: "bg-rose-100/80 text-rose-900 border-rose-300/80",
+          bannerBg: "bg-rose-50/70 border-rose-200/90",
+          riskBadge: "bg-rose-100/70 text-rose-900 border-rose-300/70",
         };
       case "FRICTION":
         return {
-          icon: <Flame className="w-5 h-5 text-red-400" />,
+          icon: <Flame className="w-5 h-5 text-rose-600" />,
           title: "FRICTION & THERMAL ELEVATION",
-          badgeColor: "bg-red-950/80 text-red-300 border-red-700",
-          bannerBg: "bg-red-950/20 border-red-800/40",
-          riskBadge: "bg-red-900/60 text-red-300 border-red-700",
+          badgeColor: "bg-rose-100/80 text-rose-900 border-rose-300/80",
+          bannerBg: "bg-rose-50/70 border-rose-200/90",
+          riskBadge: "bg-rose-100/70 text-rose-900 border-rose-300/70",
         };
       case "NORMAL":
       default:
         return {
-          icon: <ShieldCheck className="w-5 h-5 text-emerald-400" />,
+          icon: <ShieldCheck className="w-5 h-5 text-emerald-600" />,
           title: "NORMAL OPERATION",
-          badgeColor: "bg-emerald-950/80 text-emerald-300 border-emerald-700",
-          bannerBg: "bg-emerald-950/20 border-emerald-800/40",
-          riskBadge: "bg-emerald-900/60 text-emerald-300 border-emerald-700",
+          badgeColor: "bg-emerald-100/80 text-emerald-900 border-emerald-300/80",
+          bannerBg: "bg-emerald-50/50 border-emerald-200/90",
+          riskBadge: "bg-emerald-100/70 text-emerald-900 border-emerald-300/70",
         };
     }
   };
@@ -65,38 +65,38 @@ export const ConditionBanner: React.FC<ConditionBannerProps> = ({
 
   return (
     <div
-      className={`w-full rounded-xl border p-4 ${config.bannerBg} backdrop-blur-sm transition-all duration-300 shadow-md`}
+      className={`w-full rounded-xl border p-4 ${config.bannerBg} transition-colors shadow-xs`}
     >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <div className="p-2 rounded-lg bg-slate-900/90 border border-slate-700/60 shrink-0">
+          <div className="p-2 rounded-lg bg-white border border-slate-200 shadow-xs shrink-0">
             {config.icon}
           </div>
           <div>
-            <div className="flex items-center gap-2.5 flex-wrap">
-              <span className="text-xs text-slate-400 font-semibold uppercase tracking-wider">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-slate-500 font-semibold uppercase tracking-wider">
                 Simulated Condition:
               </span>
               <span
-                className={`px-2.5 py-0.5 rounded-md text-xs font-bold font-mono tracking-wide border ${config.badgeColor}`}
+                className={`px-2 py-0.5 rounded-md text-xs font-bold font-mono tracking-wide border ${config.badgeColor}`}
               >
                 {normCondition}
               </span>
               <span
-                className={`px-2.5 py-0.5 rounded-md text-xs font-semibold border ${config.riskBadge}`}
+                className={`px-2 py-0.5 rounded-md text-xs font-semibold border ${config.riskBadge}`}
               >
                 Level: {assessment.riskLevel}
               </span>
             </div>
-            <p className="text-sm text-slate-300 mt-1">
+            <p className="text-xs md:text-sm text-slate-700 mt-1 font-medium">
               {assessment.conditionDescription}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 self-start md:self-auto text-xs text-slate-400 bg-slate-900/80 border border-slate-800 px-3 py-1.5 rounded-lg shrink-0">
-          <span className="text-slate-500">Demo Mode State:</span>
-          <span className="text-cyan-300 font-medium font-mono">{assessment.riskLabel}</span>
+        <div className="flex items-center gap-2 self-start md:self-auto text-xs text-slate-600 bg-white border border-slate-200/90 px-3 py-1.5 rounded-lg shadow-xs shrink-0">
+          <span className="text-slate-400">Demo State:</span>
+          <span className="text-slate-900 font-semibold font-mono">{assessment.riskLabel}</span>
         </div>
       </div>
     </div>

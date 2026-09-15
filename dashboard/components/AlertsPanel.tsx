@@ -16,39 +16,39 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts, riskLevel, con
   const getAlertIcon = (level: "info" | "warning" | "critical") => {
     switch (level) {
       case "critical":
-        return <AlertTriangle className="w-4 h-4 text-rose-400 shrink-0" />;
+        return <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />;
       case "warning":
-        return <AlertCircle className="w-4 h-4 text-amber-400 shrink-0" />;
+        return <AlertCircle className="w-4 h-4 text-amber-600 shrink-0" />;
       case "info":
       default:
-        return <Info className="w-4 h-4 text-cyan-400 shrink-0" />;
+        return <Info className="w-4 h-4 text-sky-600 shrink-0" />;
     }
   };
 
   const getAlertBadge = (level: "info" | "warning" | "critical") => {
     switch (level) {
       case "critical":
-        return "bg-rose-950/80 text-rose-300 border-rose-800";
+        return "bg-rose-50 text-rose-800 border-rose-200";
       case "warning":
-        return "bg-amber-950/80 text-amber-300 border-amber-800";
+        return "bg-amber-50 text-amber-800 border-amber-200";
       case "info":
       default:
-        return "bg-cyan-950/80 text-cyan-300 border-cyan-800";
+        return "bg-sky-50 text-sky-800 border-sky-200";
     }
   };
 
   return (
-    <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg shadow-black/20 flex flex-col justify-between">
+    <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs flex flex-col justify-between">
       <div>
         {/* Header */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+        <div className="flex items-center justify-between pb-3.5 border-b border-slate-100">
           <div className="flex items-center gap-2">
-            <Bell className="w-4 h-4 text-cyan-400" />
-            <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
+            <Bell className="w-4 h-4 text-slate-600" />
+            <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
               Recent Alerts Panel
             </h3>
           </div>
-          <span className="text-[11px] font-mono text-slate-400">
+          <span className="text-[11px] font-mono text-slate-500">
             {alerts.length > 0 ? `${alerts.length} Active` : "0 Active"}
           </span>
         </div>
@@ -59,32 +59,32 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts, riskLevel, con
             alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="bg-slate-950/70 border border-slate-800/90 rounded-lg p-3 flex flex-col gap-1.5 transition-all hover:border-slate-700"
+                className="bg-slate-50/70 border border-slate-200/80 rounded-lg p-3 flex flex-col gap-1.5 transition-colors hover:border-slate-300"
               >
                 <div className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     {getAlertIcon(alert.level)}
-                    <span className="text-xs font-bold text-slate-200">{alert.title}</span>
+                    <span className="text-xs font-semibold text-slate-800">{alert.title}</span>
                   </div>
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-mono border ${getAlertBadge(alert.level)}`}>
+                  <span className={`px-1.5 py-0.2 rounded text-[9px] font-mono font-semibold border ${getAlertBadge(alert.level)}`}>
                     {alert.level.toUpperCase()}
                   </span>
                 </div>
 
-                <p className="text-xs text-slate-400 pl-6">{alert.message}</p>
+                <p className="text-xs text-slate-600 pl-6 leading-relaxed">{alert.message}</p>
 
-                <div className="flex items-center justify-between text-[10px] text-slate-500 pl-6 pt-1 font-mono">
-                  <span>Target: {alert.component}</span>
+                <div className="flex items-center justify-between text-[10px] text-slate-400 pl-6 pt-1 font-mono">
+                  <span>Target: <strong className="text-slate-600 font-medium">{alert.component}</strong></span>
                   <span>{alert.timestamp}</span>
                 </div>
               </div>
             ))
           ) : (
-            <div className="bg-emerald-950/20 border border-emerald-800/40 rounded-lg p-4 flex items-center gap-3 text-emerald-300 text-xs">
-              <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+            <div className="bg-emerald-50/50 border border-emerald-200/80 rounded-lg p-3.5 flex items-center gap-3 text-emerald-800 text-xs">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
               <div>
-                <p className="font-semibold text-emerald-200">No Active Critical Alerts</p>
-                <p className="text-emerald-400/80 text-[11px] mt-0.5">
+                <p className="font-semibold text-emerald-900">No Active Critical Alerts</p>
+                <p className="text-emerald-700 text-[11px] mt-0.5">
                   Conveyor telemetry parameters are operating within nominal thresholds.
                 </p>
               </div>
@@ -94,9 +94,9 @@ export const AlertsPanel: React.FC<AlertsPanelProps> = ({ alerts, riskLevel, con
       </div>
 
       {/* Footer Note */}
-      <div className="mt-4 pt-3 border-t border-slate-800/80 text-[11px] text-slate-500 flex items-center justify-between">
-        <span>Rule-based prototype diagnostics</span>
-        <span className="font-mono text-cyan-400/80">SIH26008 Engine</span>
+      <div className="mt-4 pt-3 border-t border-slate-100 text-[11px] text-slate-400 flex items-center justify-between font-mono">
+        <span>Rule-based diagnostics</span>
+        <span className="text-slate-600">SIH26008 Engine</span>
       </div>
     </div>
   );

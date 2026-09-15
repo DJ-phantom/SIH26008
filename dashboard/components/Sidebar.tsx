@@ -42,7 +42,7 @@ export const Sidebar: React.FC = () => {
       href: "/digital-twin",
       icon: <Box className="w-4 h-4" />,
       badge: "Interactive",
-      badgeColor: "bg-cyan-950 text-cyan-300 border-cyan-800",
+      badgeColor: "bg-sky-950/80 text-sky-300 border-sky-800/60",
     },
     {
       label: "Analytics & Trends",
@@ -59,7 +59,7 @@ export const Sidebar: React.FC = () => {
       href: "/incidents",
       icon: <FileWarning className="w-4 h-4" />,
       badge: "Action",
-      badgeColor: "bg-amber-950 text-amber-300 border-amber-800",
+      badgeColor: "bg-amber-950/80 text-amber-300 border-amber-800/60",
     },
     {
       label: "Emergency Contacts",
@@ -79,10 +79,10 @@ export const Sidebar: React.FC = () => {
       <div className="lg:hidden fixed bottom-4 right-4 z-50">
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="p-3 bg-cyan-600 hover:bg-cyan-500 text-white rounded-full shadow-2xl shadow-cyan-500/50 border border-cyan-400/40 flex items-center justify-center transition-transform active:scale-95"
+          className="p-3 bg-slate-900 hover:bg-slate-800 text-white rounded-full shadow-lg border border-slate-700 flex items-center justify-center transition-transform active:scale-95"
           aria-label="Toggle Navigation"
         >
-          {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
         </button>
       </div>
 
@@ -90,52 +90,54 @@ export const Sidebar: React.FC = () => {
       {mobileOpen && (
         <div
           onClick={() => setMobileOpen(false)}
-          className="lg:hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-40"
+          className="lg:hidden fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40"
         />
       )}
 
       {/* Sidebar Container */}
       <aside
-        className={`fixed top-0 left-0 bottom-0 z-40 w-64 bg-slate-950 border-r border-slate-800 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
+        className={`fixed top-0 left-0 bottom-0 z-40 w-64 bg-[#0f172a] border-r border-slate-800/90 flex flex-col justify-between transition-transform duration-300 lg:translate-x-0 ${
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
         <div>
           {/* Brand Header */}
-          <div className="p-4.5 border-b border-slate-800/90 flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-cyan-500/20 to-blue-600/20 border border-cyan-500/40 rounded-lg text-cyan-400">
-              <Layers className="w-5 h-5" />
+          <div className="p-4 border-b border-slate-800/80 flex items-center gap-3">
+            <div className="p-2 bg-slate-800/90 border border-slate-700/80 rounded-lg text-sky-400 shrink-0">
+              <Layers className="w-4 h-4" />
             </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-[10px] font-bold font-mono tracking-wider text-cyan-400 bg-cyan-950 border border-cyan-800/80 px-1.5 py-0.2 rounded">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-[10px] font-bold font-mono tracking-wider text-sky-400 bg-sky-950/80 border border-sky-800/60 px-1.5 py-0.2 rounded">
                   SIH26008
                 </span>
-                <span className="text-xs font-bold text-slate-200 tracking-tight">NMDC MINING</span>
+                <span className="text-[10px] font-bold tracking-wide text-slate-300">
+                  SRIJAN
+                </span>
               </div>
-              <h2 className="text-sm font-extrabold text-slate-100 tracking-tight leading-tight">
+              <h2 className="text-xs font-bold text-slate-100 tracking-tight leading-tight truncate">
                 Conveyor Health AI
               </h2>
             </div>
           </div>
 
           {/* Quick Conveyor Unit Info Card */}
-          <div className="mx-3 mt-3.5 p-3 rounded-lg bg-slate-900/90 border border-slate-800 text-xs flex items-center justify-between">
+          <div className="mx-3 mt-3.5 p-2.5 rounded-lg bg-slate-800/50 border border-slate-800 text-xs flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+              <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
               <div>
-                <p className="text-[10px] font-semibold uppercase text-slate-500 tracking-wider">Active Line</p>
-                <p className="font-mono font-bold text-cyan-300 text-xs">Conveyor BC01</p>
+                <p className="text-[10px] font-medium uppercase text-slate-400 tracking-wider">Active Line</p>
+                <p className="font-mono font-semibold text-slate-200 text-xs">Conveyor BC01</p>
               </div>
             </div>
-            <span className="text-[10px] font-mono bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700">
+            <span className="text-[10px] font-mono bg-slate-800/90 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700/70">
               Iron Ore
             </span>
           </div>
 
           {/* Nav List */}
           <nav className="p-3 space-y-1 mt-2">
-            <p className="px-3 pb-1 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+            <p className="px-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider text-slate-400">
               Platform Modules
             </p>
             {navItems.map((item) => {
@@ -145,21 +147,21 @@ export const Sidebar: React.FC = () => {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-all group ${
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition-colors group ${
                     isActive
-                      ? "bg-cyan-950/70 text-cyan-300 border border-cyan-800/60 shadow-sm"
-                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-900 border border-transparent"
+                      ? "bg-slate-800 text-white font-semibold shadow-xs border-l-2 border-sky-400 pl-2.5"
+                      : "text-slate-400 hover:text-slate-100 hover:bg-slate-800/50 border-l-2 border-transparent"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <span className={isActive ? "text-cyan-400" : "text-slate-500 group-hover:text-slate-300"}>
+                    <span className={isActive ? "text-sky-400" : "text-slate-400 group-hover:text-slate-200"}>
                       {item.icon}
                     </span>
                     <span>{item.label}</span>
                   </div>
                   {item.badge && (
                     <span
-                      className={`text-[9px] font-semibold font-mono px-1.5 py-0.2 rounded border ${item.badgeColor}`}
+                      className={`text-[9px] font-medium font-mono px-1.5 py-0.2 rounded border ${item.badgeColor}`}
                     >
                       {item.badge}
                     </span>
@@ -174,21 +176,21 @@ export const Sidebar: React.FC = () => {
             <Link
               href="/incidents/new"
               onClick={() => setMobileOpen(false)}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-950/60 hover:bg-amber-900/60 text-amber-300 border border-amber-800/70 rounded-lg text-xs font-semibold transition-all shadow-sm"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-lg text-xs font-medium transition-colors"
             >
-              <PlusCircle className="w-3.5 h-3.5" />
+              <PlusCircle className="w-3.5 h-3.5 text-amber-400" />
               <span>Report Incident</span>
             </Link>
           </div>
         </div>
 
         {/* Footer info */}
-        <div className="p-3.5 border-t border-slate-800/80 text-[11px] text-slate-500 bg-slate-950/90">
+        <div className="p-3.5 border-t border-slate-800/80 text-[11px] text-slate-400 bg-slate-950/60">
           <div className="flex items-center justify-between mb-1 text-[10px]">
-            <span className="text-slate-400 font-medium">Demo Mode Active</span>
+            <span className="text-slate-300 font-medium">Team SRIJAN</span>
             <span className="text-emerald-400 font-mono">v1.2-Demo</span>
           </div>
-          <p className="text-[10px] text-slate-500 leading-tight">
+          <p className="text-[10px] text-slate-400 leading-tight">
             Predictive Joint Monitoring & Fault Prevention Platform
           </p>
         </div>

@@ -97,7 +97,7 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans">
+    <div className="min-h-screen bg-[#f4f5f7] text-slate-900 flex flex-col font-sans">
       {/* Header */}
       <Header
         conveyorId="BC01"
@@ -109,16 +109,16 @@ export default function AnalyticsPage() {
 
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 space-y-5">
         {/* Title Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-xl p-4.5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border border-slate-200/90 rounded-xl p-4.5 shadow-xs">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-purple-950/70 border border-purple-800/60 text-purple-400">
-              <TrendingUp className="w-5 h-5" />
+            <div className="p-2 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
+              <TrendingUp className="w-5 h-5 text-indigo-600" />
             </div>
             <div>
-              <h1 className="text-lg font-bold text-slate-100">
+              <h1 className="text-base md:text-lg font-bold text-slate-900">
                 Telemetry Analytics & Historical Trends
               </h1>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-500">
                 Deep-dive statistical analysis, sensor distributions, and condition comparisons from PostgreSQL
               </p>
             </div>
@@ -127,56 +127,57 @@ export default function AnalyticsPage() {
           <button
             onClick={exportCSV}
             disabled={history.length === 0}
-            className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 self-start sm:self-auto"
+            className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50 self-start sm:self-auto shadow-xs"
           >
-            <Download className="w-4 h-4 text-cyan-400" />
+            <Download className="w-3.5 h-3.5 text-slate-300" />
             <span>Export CSV Dataset</span>
           </button>
         </div>
 
         {/* Controls Bar */}
-        <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 text-slate-400 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg">
-              <Filter className="w-3.5 h-3.5 text-slate-500" />
-              <span>Condition:</span>
+        <div className="bg-white border border-slate-200/90 rounded-xl p-3.5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 text-xs shadow-xs">
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="flex items-center gap-1.5 text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg font-medium">
+              <Filter className="w-3.5 h-3.5 text-slate-400" />
+              <span className="text-slate-500">Condition:</span>
               <select
                 value={conditionFilter}
                 onChange={(e) => setConditionFilter(e.target.value)}
-                className="bg-transparent text-slate-200 text-xs focus:outline-none font-medium cursor-pointer"
+                className="bg-transparent text-slate-800 text-xs focus:outline-none font-semibold cursor-pointer"
               >
-                <option value="All" className="bg-slate-900">All Conditions</option>
-                <option value="NORMAL" className="bg-slate-900">NORMAL</option>
-                <option value="OVERLOAD" className="bg-slate-900">OVERLOAD</option>
-                <option value="MISALIGNMENT" className="bg-slate-900">MISALIGNMENT</option>
-                <option value="ROLLER_FAULT" className="bg-slate-900">ROLLER_FAULT</option>
-                <option value="FRICTION" className="bg-slate-900">FRICTION</option>
+                <option value="All" className="bg-white">All Conditions</option>
+                <option value="NORMAL" className="bg-white">NORMAL</option>
+                <option value="OVERLOAD" className="bg-white">OVERLOAD</option>
+                <option value="MISALIGNMENT" className="bg-white">MISALIGNMENT</option>
+                <option value="ROLLER_FAULT" className="bg-white">ROLLER_FAULT</option>
+                <option value="FRICTION" className="bg-white">FRICTION</option>
               </select>
             </div>
 
-            <div className="flex items-center gap-1.5 text-slate-400 bg-slate-950 border border-slate-800 px-3 py-1.5 rounded-lg">
-              <span>Sample Size:</span>
+            <div className="flex items-center gap-1.5 text-slate-600 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg font-medium">
+              <span className="text-slate-500">Sample Size:</span>
               <select
                 value={limit}
                 onChange={(e) => setLimit(Number(e.target.value))}
-                className="bg-transparent text-slate-200 text-xs focus:outline-none font-medium cursor-pointer"
+                className="bg-transparent text-slate-800 text-xs focus:outline-none font-semibold cursor-pointer"
               >
-                <option value={30} className="bg-slate-900">30 Records</option>
-                <option value={50} className="bg-slate-900">50 Records</option>
-                <option value={100} className="bg-slate-900">100 Records</option>
-                <option value={250} className="bg-slate-900">250 Records</option>
+                <option value={30} className="bg-white">30 Records</option>
+                <option value={50} className="bg-white">50 Records</option>
+                <option value={100} className="bg-white">100 Records</option>
+                <option value={250} className="bg-white">250 Records</option>
               </select>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 self-end sm:self-auto text-slate-400 font-mono text-[11px]">
-            <span>Loaded: <strong className="text-cyan-300">{history.length}</strong> rows</span>
+          <div className="flex items-center gap-2 self-end sm:self-auto text-slate-500 font-mono text-[11px]">
+            <span>Loaded: <strong className="text-slate-800 font-semibold">{history.length}</strong> rows</span>
             <button
               onClick={fetchHistory}
               disabled={loading}
-              className="p-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 transition-colors"
+              className="p-1 rounded bg-slate-100 hover:bg-slate-200 text-slate-600 transition-colors"
+              aria-label="Refresh data"
             >
-              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-cyan-400" : ""}`} />
+              <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin text-slate-800" : ""}`} />
             </button>
           </div>
         </div>
@@ -184,65 +185,65 @@ export default function AnalyticsPage() {
         {/* Statistical Summary Cards */}
         {stats && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 text-xs">
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-              <span className="text-slate-400 uppercase tracking-wider font-semibold text-[10px] block mb-1">
+            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs">
+              <span className="text-slate-500 uppercase tracking-wider font-semibold text-[10px] block mb-1">
                 Temperature Statistics
               </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold font-mono text-rose-400">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-bold font-mono text-rose-800">
                   {stats.temp.avg.toFixed(1)}°C
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">avg</span>
+                <span className="text-[10px] text-slate-400 font-mono">avg</span>
               </div>
-              <div className="flex justify-between text-[11px] text-slate-400 mt-2 font-mono">
+              <div className="flex justify-between text-[11px] text-slate-500 mt-2 font-mono pt-1.5 border-t border-slate-100">
                 <span>Min: {stats.temp.min.toFixed(1)}°C</span>
                 <span>Max: {stats.temp.max.toFixed(1)}°C</span>
               </div>
             </div>
 
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-              <span className="text-slate-400 uppercase tracking-wider font-semibold text-[10px] block mb-1">
+            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs">
+              <span className="text-slate-500 uppercase tracking-wider font-semibold text-[10px] block mb-1">
                 Vibration Velocity
               </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold font-mono text-cyan-400">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-bold font-mono text-sky-800">
                   {stats.vib.avg.toFixed(2)} mm/s
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">avg</span>
+                <span className="text-[10px] text-slate-400 font-mono">avg</span>
               </div>
-              <div className="flex justify-between text-[11px] text-slate-400 mt-2 font-mono">
+              <div className="flex justify-between text-[11px] text-slate-500 mt-2 font-mono pt-1.5 border-t border-slate-100">
                 <span>Min: {stats.vib.min.toFixed(2)}</span>
                 <span>Max: {stats.vib.max.toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-              <span className="text-slate-400 uppercase tracking-wider font-semibold text-[10px] block mb-1">
+            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs">
+              <span className="text-slate-500 uppercase tracking-wider font-semibold text-[10px] block mb-1">
                 Belt Speed
               </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold font-mono text-emerald-400">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-bold font-mono text-emerald-800">
                   {stats.speed.avg.toFixed(2)} m/s
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">avg</span>
+                <span className="text-[10px] text-slate-400 font-mono">avg</span>
               </div>
-              <div className="flex justify-between text-[11px] text-slate-400 mt-2 font-mono">
+              <div className="flex justify-between text-[11px] text-slate-500 mt-2 font-mono pt-1.5 border-t border-slate-100">
                 <span>Min: {stats.speed.min.toFixed(2)}</span>
                 <span>Max: {stats.speed.max.toFixed(2)}</span>
               </div>
             </div>
 
-            <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-4">
-              <span className="text-slate-400 uppercase tracking-wider font-semibold text-[10px] block mb-1">
+            <div className="bg-white border border-slate-200/90 rounded-xl p-4 shadow-xs">
+              <span className="text-slate-500 uppercase tracking-wider font-semibold text-[10px] block mb-1">
                 Motor Current Draw
               </span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold font-mono text-amber-400">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-2xl font-bold font-mono text-amber-800">
                   {stats.current.avg.toFixed(2)} A
                 </span>
-                <span className="text-[10px] text-slate-500 font-mono">avg</span>
+                <span className="text-[10px] text-slate-400 font-mono">avg</span>
               </div>
-              <div className="flex justify-between text-[11px] text-slate-400 mt-2 font-mono">
+              <div className="flex justify-between text-[11px] text-slate-500 mt-2 font-mono pt-1.5 border-t border-slate-100">
                 <span>Min: {stats.current.min.toFixed(2)}A</span>
                 <span>Max: {stats.current.max.toFixed(2)}A</span>
               </div>
@@ -251,10 +252,10 @@ export default function AnalyticsPage() {
         )}
 
         {/* Charts: Vibration vs Current Scatter & Temperature vs Vibration */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
-              <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Vibration (X) vs Motor Current (Y) Correlation
               </h3>
               <span className="text-[10px] text-slate-400 font-mono">Mechanical Load Scatter</span>
@@ -262,19 +263,19 @@ export default function AnalyticsPage() {
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis type="number" dataKey="vibration" name="Vibration" unit=" mm/s" stroke="#64748b" tick={{ fontSize: 10 }} />
-                  <YAxis type="number" dataKey="current" name="Current" unit=" A" stroke="#64748b" tick={{ fontSize: 10 }} />
-                  <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                  <Scatter name="Operating Point" data={history} fill="#06b6d4" />
+                  <CartesianGrid strokeDasharray="2 2" stroke="#e2e8f0" />
+                  <XAxis type="number" dataKey="vibration" name="Vibration" unit=" mm/s" stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
+                  <YAxis type="number" dataKey="current" name="Current" unit=" A" stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
+                  <Tooltip cursor={{ strokeDasharray: "2 2" }} />
+                  <Scatter name="Operating Point" data={history} fill="#0284c7" />
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          <div className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg">
-            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-800">
-              <h3 className="text-xs font-bold text-slate-200 uppercase tracking-wider">
+          <div className="bg-white border border-slate-200/90 rounded-xl p-5 shadow-xs">
+            <div className="flex items-center justify-between mb-3 pb-2 border-b border-slate-100">
+              <h3 className="text-xs font-bold text-slate-800 uppercase tracking-wider">
                 Bearing Temperature (°C) vs Vibration Velocity (mm/s)
               </h3>
               <span className="text-[10px] text-slate-400 font-mono">Thermal Friction Index</span>
@@ -282,11 +283,11 @@ export default function AnalyticsPage() {
             <div className="h-64 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <ScatterChart margin={{ top: 10, right: 20, bottom: 10, left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                  <XAxis type="number" dataKey="vibration" name="Vibration" unit=" mm/s" stroke="#64748b" tick={{ fontSize: 10 }} />
-                  <YAxis type="number" dataKey="temperature" name="Temperature" unit=" °C" stroke="#64748b" tick={{ fontSize: 10 }} />
-                  <Tooltip cursor={{ strokeDasharray: "3 3" }} />
-                  <Scatter name="Thermal Metric" data={history} fill="#f43f5e" />
+                  <CartesianGrid strokeDasharray="2 2" stroke="#e2e8f0" />
+                  <XAxis type="number" dataKey="vibration" name="Vibration" unit=" mm/s" stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
+                  <YAxis type="number" dataKey="temperature" name="Temperature" unit=" °C" stroke="#94a3b8" tick={{ fontSize: 10, fill: "#64748b" }} />
+                  <Tooltip cursor={{ strokeDasharray: "2 2" }} />
+                  <Scatter name="Thermal Metric" data={history} fill="#e11d48" />
                 </ScatterChart>
               </ResponsiveContainer>
             </div>
