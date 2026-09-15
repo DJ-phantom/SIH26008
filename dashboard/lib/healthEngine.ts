@@ -1,4 +1,4 @@
-import { HealthAssessment, RiskLevel, TelemetryData } from "../types/telemetry";
+import { DemoAlert, HealthAssessment, RiskLevel, TelemetryData } from "../types/telemetry";
 
 /**
  * ============================================================================
@@ -41,23 +41,23 @@ export function calculateHealthAssessment(telemetry: TelemetryData | null): Heal
         overallScore: 68,
         beltScore: 78,
         spliceScore: 74,
-        driveScore: 48, // Drive under high strain
+        driveScore: 48,
         riskLevel: "HIGH_RISK",
         riskLabel: "High Mechanical Strain",
         conditionDescription:
           "High material load detected. Motor current is elevated above nominal profile, inducing mechanical stress on drive system.",
         alerts: [
           {
-            id: `alert-overload-${Date.now()}`,
+            id: `alert-overload`,
             timestamp: timeStr,
             level: "warning",
             component: "Drive / Motor Unit",
             title: "Overload Condition Detected",
-            message: `Motor current draw (${telemetry.current.toFixed(2)} A) exceeds nominal operating window.`,
+            message: `Motor current draw (${telemetry.current.toFixed(2)} A) exceeds nominal operating window (1.4 - 1.8 A).`,
           },
         ],
         components: {
-          motor: { status: "critical", label: "Motor Unit", detail: `High Current: ${telemetry.current}A` },
+          motor: { status: "critical", label: "Motor Unit", detail: `High Current: ${telemetry.current.toFixed(2)}A` },
           drivePulley: { status: "warning", label: "Drive Pulley", detail: "Heavy Torque Load" },
           beltStrand: { status: "warning", label: "Belt Carry Strand", detail: "Tension Stressed" },
           rollerZone: { status: "healthy", label: "Roller Idler Zone", detail: "Nominal" },
@@ -69,7 +69,7 @@ export function calculateHealthAssessment(telemetry: TelemetryData | null): Heal
     case "MISALIGNMENT":
       return {
         overallScore: 62,
-        beltScore: 45, // Belt tracking deviation
+        beltScore: 45,
         spliceScore: 60,
         driveScore: 82,
         riskLevel: "WARNING",
@@ -78,7 +78,7 @@ export function calculateHealthAssessment(telemetry: TelemetryData | null): Heal
           "Belt tracking deviation suspected. Lateral drift detected along carry strand, causing friction with structure edge.",
         alerts: [
           {
-            id: `alert-misalignment-${Date.now()}`,
+            id: `alert-misalignment`,
             timestamp: timeStr,
             level: "warning",
             component: "Belt Carry Strand",
@@ -108,7 +108,7 @@ export function calculateHealthAssessment(telemetry: TelemetryData | null): Heal
           "Abnormal high-frequency vibration spike in roller idler assembly. Indicates bearing degradation or seized idler.",
         alerts: [
           {
-            id: `alert-roller-${Date.now()}`,
+            id: `alert-roller`,
             timestamp: timeStr,
             level: "critical",
             component: "Roller Idler Zone",
@@ -120,7 +120,7 @@ export function calculateHealthAssessment(telemetry: TelemetryData | null): Heal
           motor: { status: "healthy", label: "Motor Unit", detail: "Nominal" },
           drivePulley: { status: "healthy", label: "Drive Pulley", detail: "Nominal" },
           beltStrand: { status: "warning", label: "Belt Carry Strand", detail: "Idler Chatter Impact" },
-          rollerZone: { status: "critical", label: "Roller Idler Zone", detail: `Severe Vibration: ${telemetry.vibration} mm/s` },
+          rollerZone: { status: "critical", label: "Roller Idler Zone", detail: `Severe Vibration: ${telemetry.vibration.toFixed(2)} mm/s` },
           spliceJoint: { status: "healthy", label: "Splice Joint", detail: "Nominal" },
           tailPulley: { status: "healthy", label: "Tail Pulley", detail: "Nominal" },
         },
@@ -129,7 +129,7 @@ export function calculateHealthAssessment(telemetry: TelemetryData | null): Heal
     case "FRICTION":
       return {
         overallScore: 42,
-        beltScore: 35, // Severe thermal risk
+        beltScore: 35,
         spliceScore: 48,
         driveScore: 52,
         riskLevel: "CRITICAL",
@@ -138,7 +138,7 @@ export function calculateHealthAssessment(telemetry: TelemetryData | null): Heal
           "Critical thermal elevation detected. High surface friction between belt carcass and stationary component posing tear hazard.",
         alerts: [
           {
-            id: `alert-friction-${Date.now()}`,
+            id: `alert-friction`,
             timestamp: timeStr,
             level: "critical",
             component: "Belt / Roller Interface",
@@ -149,7 +149,7 @@ export function calculateHealthAssessment(telemetry: TelemetryData | null): Heal
         components: {
           motor: { status: "warning", label: "Motor Unit", detail: "Friction Load Drag" },
           drivePulley: { status: "warning", label: "Drive Pulley", detail: "Thermal Transfer" },
-          beltStrand: { status: "critical", label: "Belt Carry Strand", detail: `High Thermal Stress: ${telemetry.temperature}°C` },
+          beltStrand: { status: "critical", label: "Belt Carry Strand", detail: `High Thermal Stress: ${telemetry.temperature.toFixed(1)}°C` },
           rollerZone: { status: "critical", label: "Roller Idler Zone", detail: "Friction Hotspot" },
           spliceJoint: { status: "critical", label: "Splice Joint", detail: "Thermal Softening Risk" },
           tailPulley: { status: "healthy", label: "Tail Pulley", detail: "Nominal" },

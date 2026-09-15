@@ -8,9 +8,9 @@ import { HealthOverview } from "../components/HealthOverview";
 import { ConveyorSystemView } from "../components/ConveyorSystemView";
 import { TelemetryCharts } from "../components/TelemetryCharts";
 import { AlertsPanel } from "../components/AlertsPanel";
-import { TelemetryData } from "../types/telemetry";
+import { DemoAlert, TelemetryData } from "../types/telemetry";
 import { calculateHealthAssessment } from "../lib/healthEngine";
-import { RefreshCw, WifiOff, AlertTriangle, ArrowRight } from "lucide-react";
+import { RefreshCw, WifiOff, ArrowRight, ShieldCheck } from "lucide-react";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
@@ -20,9 +20,10 @@ export default function DashboardPage() {
   const [isBackendConnected, setIsBackendConnected] = useState<boolean>(false);
   const [isMqttConnected, setIsMqttConnected] = useState<boolean>(false);
   const [lastUpdatedTime, setLastUpdatedTime] = useState<string | null>(null);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [alertHistory, setAlertHistory] = useState<DemoAlert[]>([]);
 
   const mountedRef = useRef<boolean>(true);
+  const prevConditionRef = useRef<string | null>(null);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -47,16 +48,41 @@ export default function DashboardPage() {
 
         if (mountedRef.current) {
           if (telemetryJson && Object.keys(telemetryJson).length > 0 && telemetryJson.temperature !== undefined) {
-            setLatestData(telemetryJson as TelemetryData);
+            const telemetry = telemetryJson as TelemetryData;
+            setLatestData(telemetry);
             setLastUpdatedTime(new Date().toLocaleTimeString());
-            setFetchError(null);
+
+            // Track alerts on condition transition without creating duplicate entries every second
+            const currentCond = (telemetry.condition || "NORMAL").toUpperCase();
+            if (prevConditionRef.current !== currentCond) {
+              prevConditionRef.current = currentCond;
+
+              const assessment = calculateHealthAssessment(telemetry);
+              if (assessment.alerts.length > 0) {
+                const newAlert = {
+                  ...assessment.alerts[0],
+                  id: `${assessment.alerts[0].id}-${Date.now()}`,
+                  timestamp: new Date().toLocaleTimeString(),
+                };
+                setAlertHistory((prev) => [newAlert, ...prev.slice(0, 7)]);
+              } else if (currentCond === "NORMAL" && alertHistory.length > 0) {
+                const recoveryNotice: DemoAlert = {
+                  id: `recovery-${Date.now()}`,
+                  timestamp: new Date().toLocaleTimeString(),
+                  level: "info",
+                  component: "System Overview",
+                  title: "Operating State Normalized",
+                  message: "Telemetry parameters have returned to nominal operating profile.",
+                };
+                setAlertHistory((prev) => [recoveryNotice, ...prev.slice(0, 7)]);
+              }
+            }
           }
         }
       } catch (err: any) {
         if (mountedRef.current) {
           setIsBackendConnected(false);
           setIsMqttConnected(false);
-          setFetchError("Backend offline or unreachable at 127.0.0.1:8000");
         }
       }
     };
@@ -96,6 +122,17 @@ export default function DashboardPage() {
 
   const assessment = calculateHealthAssessment(latestData);
   const currentCondition = latestData?.condition || "NORMAL";
+
+  // Combine live active alert with recent event log (deduplicated)
+  const displayAlerts =
+    assessment.alerts.length > 0
+      ? [
+          assessment.alerts[0],
+          ...alertHistory.filter(
+            (a) => !a.id.startsWith(assessment.alerts[0]?.id.split("-")[1] || "###")
+          ),
+        ].slice(0, 6)
+      : alertHistory.slice(0, 6);
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col font-sans selection:bg-cyan-500/30 selection:text-cyan-200">
@@ -184,7 +221,7 @@ export default function DashboardPage() {
           {/* Recent Alerts (Spans 1 column) */}
           <div className="lg:col-span-1">
             <AlertsPanel
-              alerts={assessment.alerts}
+              alerts={displayAlerts}
               riskLevel={assessment.riskLevel}
               condition={currentCondition}
             />
