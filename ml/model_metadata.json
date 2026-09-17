@@ -1,0 +1,54 @@
+{
+  "model_type": "IsolationForest",
+  "pipeline_components": [
+    "StandardScaler",
+    "IsolationForest"
+  ],
+  "trained_at": "2026-09-17T23:27:24.867933+00:00",
+  "training_sample_count": 1733,
+  "features": [
+    "temperature",
+    "vibration",
+    "current",
+    "speed",
+    "alignment",
+    "load"
+  ],
+  "contamination": 0.03,
+  "random_state": 42,
+  "n_estimators": 200,
+  "feature_stats": {
+    "temperature": {
+      "mean": 41.035025966532025,
+      "std": 0.2163324414750781
+    },
+    "vibration": {
+      "mean": 0.27065204847085983,
+      "std": 0.011855136017240125
+    },
+    "current": {
+      "mean": 4.145585689555683,
+      "std": 0.048619312823202816
+    },
+    "speed": {
+      "mean": 1.8037449509521064,
+      "std": 0.02617570428285182
+    },
+    "alignment": {
+      "mean": -0.01834968263127525,
+      "std": 0.12029124133640644
+    },
+    "load": {
+      "mean": 59.9871898442008,
+      "std": 0.7847785970320809
+    }
+  },
+  "calibration": {
+    "score_mean": 0.15552366957602223,
+    "score_std": 0.06840329430411661,
+    "score_min": -0.0596483680262051,
+    "score_p5": 0.010878346343023138,
+    "score_p95": 0.21811597346594117
+  },
+  "disclaimer": "Prototype Anomaly Detection baseline trained on synthetic NORMAL conveyor telemetry."
+}
