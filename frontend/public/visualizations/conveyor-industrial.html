@@ -1,0 +1,1597 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Industrial Conveyor Joint Monitoring — 3D Engineering Visualization</title>
+<style>
+  :root{
+    --bg:#0d1012; --panel:#15191c; --panel-border:#2c3237;
+    --steel:#8d97a0; --amber:#e0a83e; --red:#d94b3f; --green:#4caf6d;
+    --text:#e6eaed; --text-dim:#8b949c;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;height:100%;background:var(--bg);overflow:hidden;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;color:var(--text);}
+  #scene-container{position:fixed;inset:0;}
+  canvas{display:block;touch-action:none;cursor:grab;}
+  canvas.dragging{cursor:grabbing;}
+
+  #header{position:fixed;top:0;left:0;right:0;padding:14px 20px 10px;background:linear-gradient(180deg, rgba(13,16,18,0.92), rgba(13,16,18,0));pointer-events:none;z-index:10;}
+  #header h1{margin:0 0 2px;font-size:17px;font-weight:600;color:var(--text);}
+  #header h1 span{color:var(--amber);}
+  #header p{margin:0;font-size:12px;color:var(--text-dim);}
+
+  #controls{position:fixed;top:14px;right:20px;z-index:11;display:flex;gap:7px;flex-wrap:wrap;justify-content:flex-end;max-width:360px;}
+  #controls button{background:var(--panel);border:1px solid var(--panel-border);color:var(--text);padding:6px 11px;border-radius:5px;font-size:12px;cursor:pointer;font-family:inherit;}
+  #controls button:hover{border-color:var(--amber);}
+  #controls button#btn-fault.firing{border-color:var(--red);color:var(--red);}
+
+  #presets{position:fixed;top:60px;left:20px;z-index:10;display:flex;gap:6px;flex-wrap:wrap;max-width:300px;}
+  #presets button{background:rgba(21,25,28,0.85);border:1px solid var(--panel-border);color:var(--text-dim);padding:5px 9px;border-radius:5px;font-size:11px;cursor:pointer;font-family:inherit;}
+  #presets button:hover{color:var(--text);border-color:var(--steel);}
+
+  #legend{position:fixed;left:18px;bottom:18px;z-index:10;background:rgba(21,25,28,0.88);border:1px solid var(--panel-border);border-radius:8px;padding:11px 13px;max-width:220px;}
+  #legend h3{margin:0 0 7px;font-size:10.5px;letter-spacing:0.4px;color:var(--text-dim);font-weight:600;}
+  .legend-row{display:flex;align-items:center;gap:8px;margin:4px 0;font-size:11.5px;}
+  .legend-dot{width:8px;height:8px;border-radius:50%;flex:none;box-shadow:0 0 5px currentColor;}
+
+  #hint{position:fixed;right:20px;bottom:18px;z-index:10;font-size:11px;color:var(--text-dim);background:rgba(21,25,28,0.7);padding:6px 10px;border-radius:5px;border:1px solid var(--panel-border);}
+
+  #statusPanel{position:fixed;top:60px;right:20px;z-index:10;background:rgba(21,25,28,0.92);border:1px solid var(--panel-border);border-radius:8px;padding:11px 13px;width:200px;font-size:11.5px;}
+  .sp-row{display:flex;justify-content:space-between;padding:2px 0;color:var(--text-dim);}
+  .sp-row span:last-child{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums;}
+  .sp-title{align-items:center;font-weight:700;letter-spacing:0.3px;margin-bottom:5px;color:var(--text);}
+  .sp-dot{width:8px;height:8px;border-radius:50%;background:var(--green);margin-right:7px;box-shadow:0 0 6px var(--green);flex:none;}
+  .sp-dot.warn{background:var(--red);box-shadow:0 0 6px var(--red);}
+  .sp-divider{border-top:1px solid var(--panel-border);margin:7px 0;}
+  .sp-warn-title{color:var(--red);font-weight:700;justify-content:flex-start;gap:5px;}
+  #jointStatusBlock.hidden{display:none;}
+
+  #breakPanel{position:fixed;top:100px;left:50%;transform:translateX(-50%);z-index:15;background:rgba(21,25,28,0.96);border:1px solid var(--red);border-radius:9px;padding:12px;width:236px;box-shadow:0 10px 30px rgba(0,0,0,0.55);}
+  #breakPanel.hidden{display:none;}
+  #breakPanel .bp-title{color:var(--red);font-weight:700;font-size:12.5px;letter-spacing:0.3px;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+  #breakPanel .bp-title .blinkdot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 6px var(--red);animation:blink 0.9s ease-in-out infinite;}
+  #breakCam{width:100%;height:130px;border-radius:6px;border:1px solid var(--panel-border);display:block;background:#000;margin-bottom:8px;}
+  #breakPanel .bp-row{display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-dim);margin-bottom:8px;}
+  #breakPanel .bp-row span:last-child{color:var(--text);font-weight:600;}
+  #breakPanel button{width:100%;background:var(--panel);border:1px solid var(--panel-border);color:var(--text);padding:7px;border-radius:5px;font-size:12px;cursor:pointer;font-family:inherit;}
+  #breakPanel button:hover{border-color:var(--green);color:var(--green);}
+
+  #tooltip{position:fixed;z-index:20;pointer-events:none;background:rgba(14,17,19,0.97);border:1px solid var(--amber);border-left:3px solid var(--amber);border-radius:6px;padding:9px 12px;max-width:250px;font-size:12px;line-height:1.4;color:var(--text);box-shadow:0 8px 22px rgba(0,0,0,0.5);opacity:0;transform:translateY(4px);transition:opacity .12s, transform .12s;}
+  #tooltip.visible{opacity:1;transform:translateY(0);}
+  #tooltip .t-name{font-weight:700;color:var(--amber);font-size:12.5px;display:block;margin-bottom:3px;}
+  #tooltip .t-tag{font-size:9.5px;color:var(--text-dim);letter-spacing:0.3px;display:block;margin-bottom:4px;}
+
+  #loading{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;}
+  #loading .spinner{width:32px;height:32px;border-radius:50%;border:3px solid #232a2f;border-top-color:var(--amber);animation:spin .9s linear infinite;}
+  #loading span{color:var(--text-dim);font-size:12px;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spinner"></div><span>Assembling the conveyor…</span></div>
+<div id="scene-container"></div>
+
+<div id="header">
+  <h1>Industrial Conveyor <span>Joint Monitoring</span> — 3D Engineering Visualization</h1>
+  <p>Overland troughed belt conveyor · iron ore transport · condition-monitoring sensor network</p>
+</div>
+
+<div id="controls">
+  <button id="btn-pause">⏸ Pause</button>
+  <button id="btn-reset">⤾ Reset View</button>
+  <button id="btn-fault">⚠ Simulate Fault</button>
+  <button id="btn-break">🔴 Break Belt (Cord)</button>
+</div>
+
+<div id="presets">
+  <button data-preset="overall">Overall System</button>
+  <button data-preset="joint">Joint Inspection</button>
+  <button data-preset="drive">Drive Assembly</button>
+  <button data-preset="sensors">Sensor Network</button>
+  <button data-preset="loading">Loading Section</button>
+</div>
+
+<div id="breakPanel" class="hidden">
+  <div class="bp-title"><span class="blinkdot"></span>CORD BREAK DETECTED — MFL GATE</div>
+  <canvas id="breakCam" width="216" height="130"></canvas>
+  <div class="bp-row"><span>Location</span><span id="bp-loc">MID-SECTION</span></div>
+  <div class="bp-row"><span>Cause</span><span>Flux leakage</span></div>
+  <button id="btn-repair">🔧 Repair Belt</button>
+</div>
+
+<div id="statusPanel">
+  <div class="sp-row sp-title"><span class="sp-dot" id="sp-dot"></span><span id="sp-status">SYSTEM STATUS: NORMAL</span></div>
+  <div class="sp-row"><span>Belt speed</span><span id="sp-speed">0.00 m/s</span></div>
+  <div class="sp-row"><span>Joint</span><span id="sp-jointid">J-042</span></div>
+  <div class="sp-row"><span>Temperature</span><span id="sp-temp">46°C</span></div>
+  <div class="sp-row"><span>Vibration</span><span id="sp-vib">NORMAL</span></div>
+  <div class="sp-row"><span>Tension</span><span id="sp-tension">NORMAL</span></div>
+  <div id="jointStatusBlock" class="hidden">
+    <div class="sp-divider"></div>
+    <div class="sp-row sp-warn-title">⚠ JOINT STATUS</div>
+    <div class="sp-row"><span>Joint ID</span><span id="js-id">J-042</span></div>
+    <div class="sp-row"><span>Temperature</span><span id="js-temp">68°C</span></div>
+    <div class="sp-row"><span>Vibration</span><span id="js-vib">HIGH</span></div>
+    <div class="sp-row"><span>Tension</span><span id="js-tension">ABNORMAL</span></div>
+    <div class="sp-row"><span>Position</span><span id="js-pos">HEAD-SECTION</span></div>
+    <div class="sp-row"><span>Risk level</span><span id="js-risk">HIGH</span></div>
+  </div>
+</div>
+
+<div id="legend"><h3>SENSOR SUITE</h3><div id="legend-list"></div></div>
+<div id="hint">Drag to rotate · Scroll to zoom · Hover a part for details</div>
+<div id="tooltip"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+
+  // =======================================================================
+  // SENSOR / EQUIPMENT INFO
+  // =======================================================================
+  const SENSOR_INFO = {
+    camera:   { name:'Raspberry Pi Camera Module', tag:'CORE PROTOTYPE', color:0x3b82f6,
+      desc:'Pi Camera Module on a mounting arm, aimed at the splice. Streams frames to the Raspberry Pi for on-device vision-based fault detection — crack, fray, and misalignment.' },
+    thermal:  { name:'MLX90614 IR Thermal Sensor', tag:'CORE PROTOTYPE', color:0xef4444,
+      desc:'Non-contact IR sensor aimed at the splice from beside the belt. Frictional heating at a weakening joint shows up here early.' },
+    loadcell: { name:'HX711 + Load Cell', tag:'CORE PROTOTYPE', color:0x22c55e,
+      desc:'Mounted at an idler support bracket. Measures the load the belt carries there — a tension spike or drop near the joint is a rupture indicator.' },
+    hall:     { name:'Hall-Effect Sensor', tag:'CORE PROTOTYPE', color:0xa855f7,
+      desc:'Fixed on a post rooted straight into the wooden base, right under the belt. The permanent magnet above keeps a steady field through the belt\u2019s steel cords — the moment a cord breaks, the field leaks and this sensor\u2019s reading jumps, flagging the break instantly. Hover the magnet above to see the field.' },
+    magnet:   { name:'Permanent Magnet', tag:'CORE PROTOTYPE', color:0xe11d48,
+      desc:'Mounted on its own arm just above the belt. Sets up a steady magnetic field through the belt\u2019s steel cords for the hall sensor below to monitor — magnetic-flux-leakage (MFL) cord-break sensing. Hover to see the field lines.' },
+    vibration:{ name:'ADXL345 Vibration Sensor', tag:'ADDED SENSOR', color:0xf59e0b,
+      desc:'Bolted directly to the steel frame near an idler support. Abnormal shaking is one of the earliest physical signs of a joint about to fail.' },
+    moisture: { name:'Moisture / Humidity Sensor', tag:'ADDED SENSOR', color:0x06b6d4,
+      desc:'Mounted near the loading zone. Water seeping into the splice at the wet, dusty loading point weakens the rubber–fabric bond.' },
+    ultrasonic:{ name:'Ultrasonic Alignment Sensor', tag:'ADDED SENSOR', color:0xeab308,
+      desc:'Small housing aimed at the belt edge. Mistracking/wandering puts uneven side-load stress right on the joint.' },
+    gas:      { name:'MQ-2 Gas / Smoke Sensor', tag:'ADDED SENSOR', color:0xdc2626,
+      desc:'Enclosure near the drive/discharge end. Detects smoke or burning rubber from belt slip or pulley friction — a real fire hazard underground.' },
+    tacho:    { name:'IR Tachometer (RPM Sensor)', tag:'ADDED SENSOR', color:0x64748b,
+      desc:'Reads motor shaft speed. Comparing this to actual belt speed catches slip — a damaged joint often loses grip before it visibly tears.' },
+    cordbreak:{ name:'Steel-Cord Break Detector', tag:'PHASE-2 CONCEPT', color:0xff5252,
+      desc:'A scanning gantry the belt runs through, checking internal steel cords for a break and sounding a beep alert on detection (magnetic-flux-leakage based). Shown as a future-scope addition.' },
+    motor:    { name:'Motor + Gearbox Drive', tag:'EQUIPMENT', color:0x1e3a8a,
+      desc:'Electric motor and gearbox on a mounting base, coupled to the head pulley shaft through a guarded chain drive. Its rated RPM is the baseline the tachometer checks slip against.' },
+    joint:    { name:'Belt Joint (Splice)', tag:'MONITORED POINT', color:0xf0a830,
+      desc:'The mechanical splice joining two belt sections — visible seam, fastener row, slight thickness change. The highest-stress point on the whole conveyor, and the reason this project exists. The amber band is a diagnostic overlay, not part of the belt itself.' },
+    headpulley:{ name:'Head Pulley Assembly', tag:'EQUIPMENT', color:0x9ca3af,
+      desc:'Drive-end pulley with shaft extensions and bearing housings on both sides. Ore discharges here as the belt wraps around it.' },
+    tailpulley:{ name:'Tail Pulley / Loading Point', tag:'EQUIPMENT', color:0x9ca3af,
+      desc:'Loading-end pulley beneath the feed chute, with its own bearing housings and take-up slack built into the mount.' },
+    idler:    { name:'Troughing Idler Station', tag:'EQUIPMENT', color:0x9ca3af,
+      desc:'Three-roll station (two angled side rollers + one centre roller) that shapes the belt into a trough so ore doesn\u2019t spill off the sides.' },
+    returnidler:{ name:'Return Idler', tag:'EQUIPMENT', color:0x9ca3af,
+      desc:'Single flat roller supporting the empty return run underneath the conveyor.' },
+    controlbox:{ name:'Raspberry Pi Enclosure', tag:'EQUIPMENT', color:0x22c55e,
+      desc:'Weatherproof enclosure housing the Raspberry Pi 4 compute node and sensor interface board. All sensor cables trunk here through the cable tray for on-device fault detection and logging.' },
+    computenode:{ name:'Raspberry Pi 4 — Compute Node', tag:'EQUIPMENT', color:0xc51a4a,
+      desc:'Runs the fault-detection pipeline: reads all sensors over GPIO, processes the camera feed for vision-based defect detection, and drives the dashboard.' },
+    powersupply:{ name:'Power Supply', tag:'EQUIPMENT', color:0xf59e0b,
+      desc:'Mains-to-DC supply powering the Raspberry Pi, camera, and sensor electronics.' },
+  };
+
+  const LEGEND_KEYS = ['camera','thermal','loadcell','hall','vibration','moisture','ultrasonic','gas','tacho','cordbreak'];
+  const legendList = document.getElementById('legend-list');
+  LEGEND_KEYS.forEach(k=>{
+    const info = SENSOR_INFO[k];
+    const row = document.createElement('div');
+    row.className='legend-row';
+    const hex = '#'+info.color.toString(16).padStart(6,'0');
+    row.innerHTML = `<span class="legend-dot" style="background:${hex};color:${hex}"></span><span>${info.name}</span>`;
+    legendList.appendChild(row);
+  });
+
+  // =======================================================================
+  // THREE.JS BASE SETUP
+  // =======================================================================
+  const container = document.getElementById('scene-container');
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0d1012);
+  scene.fog = new THREE.Fog(0x0d1012, 22, 62);
+
+  const camera = new THREE.PerspectiveCamera(45, window.innerWidth/window.innerHeight, 0.1, 200);
+  const renderer = new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  container.appendChild(renderer.domElement);
+
+  // Lighting — soft industrial, restrained colour
+  scene.add(new THREE.HemisphereLight(0x9aa5ad, 0x2a231c, 0.55));
+  const sun = new THREE.DirectionalLight(0xfff2e0, 1.0);
+  sun.position.set(14, 24, 12);
+  sun.castShadow = true;
+  sun.shadow.mapSize.set(2048,2048);
+  sun.shadow.camera.left=-22; sun.shadow.camera.right=22;
+  sun.shadow.camera.top=22; sun.shadow.camera.bottom=-22;
+  sun.shadow.camera.far=65;
+  scene.add(sun);
+  const fill = new THREE.DirectionalLight(0xaebbc7, 0.35);
+  fill.position.set(-10,14,-8);
+  scene.add(fill);
+  const workLight = new THREE.PointLight(0xffb060, 0.28, 9);
+  scene.add(workLight);
+
+  const rig = new THREE.Group();
+  scene.add(rig);
+
+  // =======================================================================
+  // TEXTURES
+  // =======================================================================
+  function makeRubberTexture(){
+    const c=document.createElement('canvas'); c.width=256;c.height=64;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#1c1c1c'; ctx.fillRect(0,0,256,64);
+    ctx.strokeStyle='rgba(255,255,255,0.07)'; ctx.lineWidth=5;
+    for(let x=-64;x<320;x+=18){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x+40,64); ctx.stroke(); }
+    // wear speckles
+    for(let i=0;i<200;i++){
+      ctx.fillStyle=`rgba(${60+Math.random()*40},${55+Math.random()*35},${50+Math.random()*30},${0.08+Math.random()*0.1})`;
+      ctx.fillRect(Math.random()*256, Math.random()*64, 1+Math.random()*2, 1+Math.random()*2);
+    }
+    ctx.strokeStyle='rgba(0,0,0,0.35)'; ctx.lineWidth=1; ctx.strokeRect(0,0,256,64);
+    const tex=new THREE.CanvasTexture(c); tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(16,1);
+    return tex;
+  }
+  function makeSteelTexture(){
+    const c=document.createElement('canvas'); c.width=128;c.height=128;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#7d8790'; ctx.fillRect(0,0,128,128);
+    for(let i=0;i<40;i++){
+      ctx.strokeStyle=`rgba(0,0,0,${0.05+Math.random()*0.08})`; ctx.lineWidth=1;
+      const y=Math.random()*128;
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(128,y+Math.random()*4-2); ctx.stroke();
+    }
+    ctx.fillStyle='rgba(20,25,30,0.5)';
+    for(let x=0;x<128;x+=16){ ctx.fillRect(x,0,6,128); }
+    const tex=new THREE.CanvasTexture(c); tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(3,1);
+    return tex;
+  }
+  function makeConcreteTexture(){
+    const c=document.createElement('canvas'); c.width=256;c.height=256;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#63676b'; ctx.fillRect(0,0,256,256);
+    for(let i=0;i<1000;i++){
+      const g=45+Math.random()*45;
+      ctx.fillStyle=`rgba(${g},${g},${g+3},${0.05+Math.random()*0.09})`;
+      ctx.fillRect(Math.random()*256, Math.random()*256, 1+Math.random()*2, 1+Math.random()*2);
+    }
+    ctx.strokeStyle='rgba(25,25,25,0.4)'; ctx.lineWidth=3;
+    ctx.strokeRect(0,0,256,256);
+    const tex=new THREE.CanvasTexture(c); tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(14,14);
+    return tex;
+  }
+  function makeHazardTexture(){
+    const c=document.createElement('canvas'); c.width=128;c.height=32;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#141414'; ctx.fillRect(0,0,128,32);
+    ctx.fillStyle='#e0a83e';
+    for(let x=-40;x<160;x+=24){
+      ctx.beginPath(); ctx.moveTo(x,32); ctx.lineTo(x+12,32); ctx.lineTo(x+28,0); ctx.lineTo(x+16,0); ctx.closePath(); ctx.fill();
+    }
+    const tex=new THREE.CanvasTexture(c); tex.wrapS=tex.wrapT=THREE.RepeatWrapping; tex.repeat.set(2,1);
+    return tex;
+  }
+  function makeWoodTexture(){
+    const c=document.createElement('canvas'); c.width=256;c.height=256;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#a9713f'; ctx.fillRect(0,0,256,256);
+    ctx.fillStyle='rgba(120,70,30,0.25)';
+    for(let y=0;y<256;y+=6){ ctx.fillRect(0,y,256,2); }
+    for(let i=0;i<70;i++){
+      const y=Math.random()*256;
+      ctx.strokeStyle=`rgba(60,32,12,${0.07+Math.random()*0.12})`;
+      ctx.lineWidth=0.6+Math.random()*1.6;
+      ctx.beginPath(); ctx.moveTo(0,y);
+      let cx=0;
+      while(cx<256){ cx+=20+Math.random()*30; ctx.lineTo(cx, y+(Math.random()-0.5)*10); }
+      ctx.stroke();
+    }
+    ctx.strokeStyle='rgba(40,20,8,0.5)'; ctx.lineWidth=2.5;
+    for(let x=0;x<256;x+=64){ ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,256); ctx.stroke(); }
+    const tex=new THREE.CanvasTexture(c); tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
+    return tex;
+  }
+  function makeFanGrilleTexture(){
+    const c=document.createElement('canvas'); c.width=128;c.height=128;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#1a1f24'; ctx.fillRect(0,0,128,128);
+    ctx.strokeStyle='#3a434c'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.arc(64,64,58,0,Math.PI*2); ctx.stroke();
+    for(let a=0;a<12;a++){
+      const ang = a*(Math.PI*2/12);
+      ctx.beginPath();
+      ctx.moveTo(64+Math.cos(ang)*14, 64+Math.sin(ang)*14);
+      ctx.lineTo(64+Math.cos(ang)*58, 64+Math.sin(ang)*58);
+      ctx.stroke();
+    }
+    ctx.beginPath(); ctx.arc(64,64,13,0,Math.PI*2); ctx.fillStyle='#252b31'; ctx.fill(); ctx.stroke();
+    const tex=new THREE.CanvasTexture(c);
+    return tex;
+  }
+  function makeRaspberryPiTexture(){
+    const c=document.createElement('canvas'); c.width=280;c.height=190;
+    const ctx=c.getContext('2d');
+    ctx.fillStyle='#1a7a3e'; ctx.fillRect(0,0,280,190);
+    // GPIO header
+    ctx.fillStyle='#0e0e0e'; ctx.fillRect(8,8,196,16);
+    ctx.fillStyle='#d4af37';
+    for(let i=0;i<20;i++){ ctx.fillRect(10+i*9.7,10,4,4); ctx.fillRect(10+i*9.7,17,4,4); }
+    // SoC
+    ctx.fillStyle='#232323'; ctx.fillRect(64,66,54,54);
+    ctx.fillStyle='#3a3a3a'; ctx.fillRect(70,72,42,42);
+    // RAM chip
+    ctx.fillStyle='#161616'; ctx.fillRect(130,66,34,34);
+    // USB-C power
+    ctx.fillStyle='#b7bcc2'; ctx.fillRect(4,150,20,10);
+    // micro-HDMI x2
+    ctx.fillStyle='#909599'; ctx.fillRect(34,150,14,9); ctx.fillRect(54,150,14,9);
+    // USB ports
+    ctx.fillStyle='#b7bcc2'; ctx.fillRect(244,18,30,24); ctx.fillRect(244,50,30,24);
+    // ethernet
+    ctx.fillStyle='#3a3a3a'; ctx.fillRect(244,86,32,28);
+    // camera/display connectors
+    ctx.fillStyle='#e6e6e6'; ctx.fillRect(100,4,30,7); ctx.fillRect(140,4,30,7);
+    // micro-SD
+    ctx.fillStyle='#101010'; ctx.fillRect(0,110,7,22);
+    // scattered caps/resistors
+    for(let i=0;i<24;i++){
+      ctx.fillStyle = Math.random()>0.5? '#c9a227':'#555';
+      ctx.fillRect(20+Math.random()*220, 100+Math.random()*40, 3+Math.random()*4, 3+Math.random()*4);
+    }
+    ctx.strokeStyle='rgba(0,0,0,0.4)'; ctx.lineWidth=2; ctx.strokeRect(1,1,278,188);
+    const tex=new THREE.CanvasTexture(c);
+    return tex;
+  }
+  const rubberTex = makeRubberTexture();
+  const steelTex = makeSteelTexture();
+  const concreteTex = makeConcreteTexture();
+  const hazardTex = makeHazardTexture();
+  const woodTex = makeWoodTexture();
+  const fanGrilleTex = makeFanGrilleTexture();
+
+  const steelDarkMat = ()=> new THREE.MeshStandardMaterial({color:0x2b3138, metalness:0.82, roughness:0.38});
+  const steelLightMat = ()=> new THREE.MeshStandardMaterial({map:steelTex, color:0xaab2ba, metalness:0.78, roughness:0.42});
+  const boltMatBase = new THREE.MeshStandardMaterial({color:0x1c2024, metalness:0.7, roughness:0.4});
+
+  // =======================================================================
+  // GENERIC HELPERS
+  // =======================================================================
+  function connect(p1, p2, radius, color, opts){
+    opts = opts||{};
+    const dirV = new THREE.Vector3().subVectors(p2,p1);
+    const len = dirV.length();
+    const geo = new THREE.CylinderGeometry(radius, opts.radius2!==undefined?opts.radius2:radius, len, opts.seg||10);
+    const mat = new THREE.MeshStandardMaterial({color, metalness:opts.metalness!==undefined?opts.metalness:0.6, roughness:opts.roughness!==undefined?opts.roughness:0.4});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(p1).add(dirV.clone().multiplyScalar(0.5));
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dirV.clone().normalize());
+    mesh.castShadow = opts.castShadow!==false;
+    return mesh;
+  }
+  function makeOreGeometry(radius){
+    const geo = new THREE.IcosahedronGeometry(radius, 0);
+    const pos = geo.attributes.position;
+    for(let i=0;i<pos.count;i++){
+      const j = 0.8 + Math.random()*0.34;
+      pos.setXYZ(i, pos.getX(i)*j, pos.getY(i)*j, pos.getZ(i)*j);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+  const oreColors = [0x7a3d22,0x8b4a2b,0x6e2c1b,0x943126,0x5c2716,0x9c5a35];
+
+  const boltPlacements = []; // world-space bolts, batched into one InstancedMesh
+  function addBoltWorld(pos, quat, scale){
+    boltPlacements.push({pos:pos.clone(), quat: quat?quat.clone():new THREE.Quaternion(), scale: scale||1});
+  }
+
+  // =======================================================================
+  // CONVEYOR GEOMETRY — constants & the inclined local frame ("rail")
+  // =======================================================================
+  const R = 0.42;                 // pulley radius
+  const W = 1.35;                 // nominal belt width
+  const INCLINE_DEG = 20;
+  const L = 16.8;                 // belt run length
+  const inclineRad = INCLINE_DEG*Math.PI/180;
+
+  const dirV = new THREE.Vector3(Math.cos(inclineRad), Math.sin(inclineRad), 0);
+  const pUp  = new THREE.Vector3(-dirV.y, dirV.x, 0).normalize();
+  const tailPos = new THREE.Vector3(-L*Math.cos(inclineRad)/2, R+0.60, 0);
+  const headPos = tailPos.clone().add(dirV.clone().multiplyScalar(L));
+
+  const rail = new THREE.Object3D();
+  rail.position.copy(tailPos);
+  rail.quaternion.setFromRotationMatrix(new THREE.Matrix4().makeBasis(dirV, pUp, new THREE.Vector3(0,0,1)));
+  rig.add(rail);
+  rail.updateMatrixWorld(true);
+  function toWorld(x,y,z){ return rail.localToWorld(new THREE.Vector3(x,y,z)); }
+
+  const SIDE = W/2 + 0.35;
+  const BOARD_TOP_Y = 0.14;
+  const EDGE = W/2 + 0.08;
+  const troughAngle = 30*Math.PI/180;
+  const centerW = W*0.28, sideW = W*0.48;
+  const beltThickness = 0.11;
+  const stringerY = -0.12, stringerH = 0.15, stringerW = 0.11;
+  const TRAY_Y = stringerY + 0.13, TRAY_Z = W/2 + 0.16;
+
+  const interactive = [];
+  const sensorMarkers = [];
+
+  // =======================================================================
+  // 1. STEEL STRUCTURE — stringers, cross-members, bracing (rail-local),
+  //    end stands with base plates (world-space, only 2 stands)
+  // =======================================================================
+  const stringerMat = steelDarkMat();
+  [-1,1].forEach(side=>{
+    const z = side*(W/2+0.14);
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(L, stringerH, stringerW), stringerMat);
+    beam.position.set(L/2, stringerY, z);
+    beam.castShadow = true; beam.receiveShadow = true;
+    rail.add(beam);
+  });
+  const crossXs = [0.14,0.30,0.46,0.62,0.78,0.94].map(f=>f*L);
+  crossXs.forEach(x=>{
+    const cross = new THREE.Mesh(new THREE.BoxGeometry(0.09,0.09,W+0.30), steelLightMat());
+    cross.position.set(x, stringerY, 0);
+    cross.castShadow = true;
+    rail.add(cross);
+  });
+  // diagonal truss bracing (zig-zag) on both side faces
+  for(let i=0;i<crossXs.length-1;i++){
+    const xa=crossXs[i], xb=crossXs[i+1];
+    [-1,1].forEach(side=>{
+      const z = side*(W/2+0.14);
+      rail.add(connect(new THREE.Vector3(xa,stringerY-0.06,z), new THREE.Vector3(xb,stringerY+0.06,z), 0.028, 0x3a4148, {metalness:0.6,roughness:0.5}));
+    });
+  }
+
+  // wooden base board — the rig's stands are bolted onto this, like a real benchtop prototype
+  const boardMargin = 1.4;
+  const tailFootProbe = toWorld(0, stringerY, 0);
+  const headFootProbe = toWorld(L, stringerY, 0);
+  const boardLen = Math.abs(headFootProbe.x - tailFootProbe.x) + boardMargin*2;
+  const boardDepth = W + 2.6;
+  const boardCenterX = (tailFootProbe.x + headFootProbe.x)/2;
+  const boardCenterZ = (tailFootProbe.z + headFootProbe.z)/2 + 0.4;
+  const woodBoard = new THREE.Mesh(new THREE.BoxGeometry(boardLen, BOARD_TOP_Y, boardDepth),
+    new THREE.MeshStandardMaterial({map:woodTex, roughness:0.82, metalness:0.03}));
+  woodBoard.position.set(boardCenterX, BOARD_TOP_Y/2, boardCenterZ);
+  woodBoard.castShadow = true; woodBoard.receiveShadow = true;
+  rig.add(woodBoard);
+
+  // end stands (world space) — only 2, at tail (x=0) and head (x=L), light attractive colour
+  const standColor = 0x9cc9e8;
+  function buildStand(localX){
+    [-1,1].forEach(side=>{
+      const z = W/2+0.14;
+      const topWorld = toWorld(localX, stringerY, side*z);
+      const footWorld = new THREE.Vector3(topWorld.x, BOARD_TOP_Y, topWorld.z);
+      rig.add(connect(footWorld, topWorld, 0.10, standColor, {metalness:0.45,roughness:0.4}));
+      // base plate + anchor bolts, resting on the wooden board
+      const plate = new THREE.Mesh(new THREE.BoxGeometry(0.42,0.05,0.42), steelLightMat());
+      plate.position.set(footWorld.x, BOARD_TOP_Y+0.025, footWorld.z);
+      plate.castShadow = true; plate.receiveShadow = true;
+      rig.add(plate);
+      [[-0.15,-0.15],[-0.15,0.15],[0.15,-0.15],[0.15,0.15]].forEach(([dx,dz])=>{
+        addBoltWorld(new THREE.Vector3(footWorld.x+dx, BOARD_TOP_Y+0.06, footWorld.z+dz), new THREE.Quaternion(), 1.1);
+      });
+      // horizontal rungs between the leg and the frame for rigidity
+      const midWorld = footWorld.clone().lerp(topWorld,0.55);
+      rig.add(connect(new THREE.Vector3(midWorld.x-0.28,midWorld.y,midWorld.z), new THREE.Vector3(midWorld.x+0.05,midWorld.y,midWorld.z), 0.035, standColor, {metalness:0.4,roughness:0.45}));
+    });
+    // cross brace between the two legs of this stand
+    const zL = toWorld(localX, stringerY*0.5, -(W/2+0.14));
+    const zR = toWorld(localX, stringerY*0.5, (W/2+0.14));
+    rig.add(connect(new THREE.Vector3(zL.x,BOARD_TOP_Y+0.6,zL.z), new THREE.Vector3(zR.x,BOARD_TOP_Y+1.4,zR.z), 0.035, standColor, {metalness:0.4,roughness:0.45}));
+    rig.add(connect(new THREE.Vector3(zL.x,BOARD_TOP_Y+1.4,zL.z), new THREE.Vector3(zR.x,BOARD_TOP_Y+0.6,zR.z), 0.035, standColor, {metalness:0.4,roughness:0.45}));
+  }
+  buildStand(0);
+  buildStand(L);
+
+  // =======================================================================
+  // 2 & 4. PULLEYS (tail/head) with bearing housings + shaft extensions
+  // =======================================================================
+  function makePulley(localPos, radius, label){
+    const group = new THREE.Group();
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius,radius,W,28), steelLightMat());
+    mesh.castShadow = true;
+    group.add(mesh);
+    group.position.copy(localPos);
+    group.rotation.x = Math.PI/2;
+    group.userData.spinMesh = mesh;
+    group.userData.info = label;
+    return group;
+  }
+  const tailPulley = makePulley(new THREE.Vector3(0,0,0), R, 'tailpulley');
+  const headPulley = makePulley(new THREE.Vector3(L,0,0), R, 'headpulley');
+  rail.add(tailPulley, headPulley);
+  interactive.push(tailPulley, headPulley);
+
+  function addBearingHousings(localX){
+    [-1,1].forEach(side=>{
+      const z = side*(W/2+0.10);
+      const pedestal = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.20,0.16), steelDarkMat());
+      pedestal.position.set(localX, -0.10, z);
+      pedestal.castShadow = true;
+      rail.add(pedestal);
+      const housing = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,0.16,16), steelLightMat());
+      housing.rotation.x = Math.PI/2;
+      housing.position.set(localX, 0.02, z);
+      housing.castShadow = true;
+      rail.add(housing);
+      const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.055,0.055,0.20,12), new THREE.MeshStandardMaterial({map:steelTex,metalness:0.75,roughness:0.35}));
+      shaft.rotation.x = Math.PI/2;
+      shaft.position.set(localX, 0.02, side*(W/2+0.20));
+      rail.add(shaft);
+    });
+  }
+  addBearingHousings(0);
+  addBearingHousings(L);
+
+  // =======================================================================
+  // 3. TROUGHING IDLER STATIONS (3-roll) + RETURN ROLLERS
+  // =======================================================================
+  const idlerR = 0.16, centerRollerLen = W*0.44, sideRollerLen = W*0.40;
+  const IDLER_T = [0.08,0.24,0.40,0.56,0.72,0.88];
+  const idlers = [];
+
+  function buildIdlerStation(t){
+    const x = t*L;
+    const centerY = R - idlerR - 0.02;
+    const station = new THREE.Group();
+    station.position.set(x,0,0);
+    rail.add(station);
+
+    const centerMesh = new THREE.Mesh(new THREE.CylinderGeometry(idlerR,idlerR,centerRollerLen,18), steelLightMat());
+    centerMesh.rotation.x = Math.PI/2;
+    centerMesh.position.set(0, centerY, 0);
+    centerMesh.castShadow = true;
+    station.add(centerMesh);
+    const centerGroup = { userData:{ spinMesh: centerMesh } };
+
+    const sideMeshes = [];
+    [-1,1].forEach(sign=>{
+      const sm = new THREE.Mesh(new THREE.CylinderGeometry(idlerR*0.92,idlerR*0.92,sideRollerLen,16), steelLightMat());
+      sm.rotation.x = sign*(Math.PI/2 - troughAngle);
+      sm.position.set(0, centerY, sign*(centerRollerLen*0.42));
+      sm.castShadow = true;
+      station.add(sm);
+      sideMeshes.push(sm);
+    });
+
+    // mounting frame: post from stringer + a shallow cross bracket
+    station.add(connect(new THREE.Vector3(0,stringerY,0), new THREE.Vector3(0,centerY-idlerR-0.03,0), 0.035, 0x3a4148, {metalness:0.6,roughness:0.45}));
+    station.add(connect(new THREE.Vector3(0,centerY-idlerR-0.02,-centerRollerLen*0.42), new THREE.Vector3(0,centerY-idlerR-0.02,centerRollerLen*0.42), 0.03, 0x3a4148, {metalness:0.6,roughness:0.45}));
+    [-1,1].forEach(sign=>{
+      addBoltWorld(toWorld(x, centerY-idlerR-0.06, sign*centerRollerLen*0.4), rail.quaternion, 0.9);
+    });
+
+    station.userData.info = 'idler';
+    station.userData.spinTargets = [centerMesh, ...sideMeshes];
+    interactive.push(station);
+    idlers.push(station);
+  }
+  IDLER_T.forEach(buildIdlerStation);
+
+  const returnIdlerR = 0.13, returnRollerLen = W*0.85;
+  const RETURN_T = [0.20,0.50,0.80];
+  const returnRollers = [];
+  RETURN_T.forEach(t=>{
+    const x = t*L;
+    const y = -(R+returnIdlerR+0.02);
+    const group = new THREE.Group();
+    group.position.set(x,y,0);
+    group.rotation.x = Math.PI/2;
+    const mesh = new THREE.Mesh(new THREE.CylinderGeometry(returnIdlerR,returnIdlerR,returnRollerLen,16), steelLightMat());
+    mesh.castShadow = true;
+    group.add(mesh);
+    group.userData.spinMesh = mesh;
+    group.userData.info = 'returnidler';
+    rail.add(group);
+    interactive.push(group);
+    returnRollers.push(group);
+    // short hangers from stringer
+    [-1,1].forEach(side=>{
+      rail.add(connect(new THREE.Vector3(x,stringerY,side*(W/2+0.05)), new THREE.Vector3(x,y,side*(returnRollerLen/2-0.05)), 0.03, 0x3a4148, {metalness:0.6,roughness:0.45}));
+    });
+  });
+
+  // =======================================================================
+  // BELT — smoothly curved troughed top run + flat return run
+  // =======================================================================
+  const beltMat = new THREE.MeshStandardMaterial({map:rubberTex, color:0x3a3a3a, roughness:0.93, metalness:0.03, side:THREE.DoubleSide});
+
+  function troughYOffset(vNorm, depth, flatFrac){
+    const av = Math.abs(vNorm);
+    if(av<=flatFrac) return 0;
+    const t = (av-flatFrac)/(1-flatFrac);
+    return depth*Math.pow(t,1.25);
+  }
+  function buildCurvedBeltGeometry(xStart, xEnd, halfWidth, depth, flatFrac, lengthSegs, widthSegs, baseY){
+    const positions=[], normals=[], uvs=[], indices=[];
+    for(let i=0;i<=lengthSegs;i++){
+      const u = i/lengthSegs;
+      const x = xStart + u*(xEnd-xStart);
+      for(let j=0;j<=widthSegs;j++){
+        const v = (j/widthSegs)*2-1;
+        const z = v*halfWidth;
+        const y = baseY + troughYOffset(v, depth, flatFrac);
+        positions.push(x,y,z);
+        uvs.push(u, j/widthSegs);
+      }
+    }
+    for(let i=0;i<lengthSegs;i++){
+      for(let j=0;j<widthSegs;j++){
+        const a=i*(widthSegs+1)+j, b=a+1, c=a+(widthSegs+1), d=c+1;
+        indices.push(a,c,b, b,c,d);
+      }
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.Float32BufferAttribute(positions,3));
+    geo.setAttribute('uv', new THREE.Float32BufferAttribute(uvs,2));
+    geo.setIndex(indices);
+    geo.computeVertexNormals();
+    return geo;
+  }
+
+  const beltDepth = 0.32, beltFlatFrac = 0.20;
+  const topBeltGeo = buildCurvedBeltGeometry(L*0.0075, L*0.9925, W/2, beltDepth, beltFlatFrac, 36, 16, R);
+  const topBeltMesh = new THREE.Mesh(topBeltGeo, beltMat);
+  topBeltMesh.castShadow = true; topBeltMesh.receiveShadow = true;
+  rail.add(topBeltMesh);
+  // thin edge lips along both outer edges, to read as belt thickness
+  [-1,1].forEach(sign=>{
+    const lip = new THREE.Mesh(new THREE.BoxGeometry(L*0.985, beltThickness*0.9, 0.025), beltMat);
+    lip.position.set(L/2, R+beltDepth-beltThickness*0.4, sign*(W/2-0.01));
+    lip.rotation.x = -sign*0.45;
+    rail.add(lip);
+  });
+
+  const returnBelt = new THREE.Mesh(new THREE.BoxGeometry(L*0.985, beltThickness*0.85, W*0.88), beltMat);
+  returnBelt.position.set(L/2, -R, 0);
+  returnBelt.castShadow = true; returnBelt.receiveShadow = true;
+  rail.add(returnBelt);
+
+  // =======================================================================
+  // BELT JOINT / SPLICE — travels with the belt, diagnostic overlay only
+  // =======================================================================
+  const jointGroup = new THREE.Object3D();
+  rail.add(jointGroup);
+  const seamMesh = new THREE.Mesh(new THREE.BoxGeometry(0.15, beltThickness*1.2, centerW*0.94),
+    new THREE.MeshStandardMaterial({color:0x161616, roughness:0.88, metalness:0.05}));
+  seamMesh.position.set(0, R, 0);
+  seamMesh.castShadow = true;
+  jointGroup.add(seamMesh);
+  for(let i=-3;i<=3;i++){
+    const bolt = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.045,8), boltMatBase);
+    bolt.position.set(0.02, R+beltThickness*0.62, i*(centerW*0.85/6));
+    jointGroup.add(bolt);
+  }
+  const overlayMesh = new THREE.Mesh(new THREE.BoxGeometry(0.30,0.018,W*0.92),
+    new THREE.MeshStandardMaterial({color:0xf0a830, emissive:0xf0a830, emissiveIntensity:0.14, transparent:true, opacity:0.15, roughness:0.6}));
+  overlayMesh.position.set(0, R+0.085, 0);
+  jointGroup.add(overlayMesh);
+  jointGroup.userData.info = 'joint';
+  jointGroup.userData.overlay = overlayMesh;
+  interactive.push(jointGroup);
+
+  // =======================================================================
+  // HALL-EFFECT + PERMANENT MAGNET — magnetic-flux-leakage cord-break gate.
+  // Both are stationary: the magnet sits on its own arm above the belt, the
+  // hall sensor sits below the belt on a post fixed straight into the
+  // wooden base board. The belt (with its steel cords) runs through the
+  // gap between them.
+  // =======================================================================
+  const HALL_T = 0.32;
+  const hallGateX = HALL_T*L;
+  const gateZ = -0.32;
+  const magnetLocalPos = new THREE.Vector3(hallGateX, R+0.24, gateZ);
+  const hallLocalPos = new THREE.Vector3(hallGateX, R-0.24, gateZ);
+
+  // magnet mounting arm — post off the stringer, light "stand" colour
+  const armBase = new THREE.Vector3(hallGateX, stringerY, -(W/2+0.14));
+  const armElbow = new THREE.Vector3(hallGateX, R+0.55, -(W/2+0.14));
+  rail.add(connect(armBase, armElbow, 0.032, standColor, {metalness:0.4, roughness:0.45}));
+  rail.add(connect(armElbow, magnetLocalPos.clone().add(new THREE.Vector3(0,0.10,0)), 0.032, standColor, {metalness:0.4, roughness:0.45}));
+
+  // permanent bar magnet — red N pole facing down toward the belt, blue S pole up
+  const magnetGroup = new THREE.Group();
+  const nPole = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.09,0.12), new THREE.MeshStandardMaterial({color:0xdc2626, metalness:0.35, roughness:0.35}));
+  nPole.position.y = -0.045;
+  nPole.castShadow = true;
+  magnetGroup.add(nPole);
+  const sPole = new THREE.Mesh(new THREE.BoxGeometry(0.12,0.09,0.12), new THREE.MeshStandardMaterial({color:0x2563eb, metalness:0.35, roughness:0.35}));
+  sPole.position.y = 0.045;
+  sPole.castShadow = true;
+  magnetGroup.add(sPole);
+  magnetGroup.position.copy(magnetLocalPos);
+  magnetGroup.userData.info = 'magnet';
+  rail.add(magnetGroup);
+  interactive.push(magnetGroup);
+
+  // magnetic field lines — hidden until the magnet is hovered
+  const fieldLineMeshes = [];
+  const FIELD_LINE_COUNT = 6;
+  const beltLocalY = R - magnetLocalPos.y; // belt surface, in magnetGroup-local Y
+  for(let i=0;i<FIELD_LINE_COUNT;i++){
+    const theta = (i/FIELD_LINE_COUNT)*Math.PI*2;
+    const rx = Math.cos(theta), rz = Math.sin(theta);
+    const pts = [
+      new THREE.Vector3(0,-0.09,0),
+      new THREE.Vector3(rx*0.16, -0.22, rz*0.16),
+      new THREE.Vector3(rx*0.24, beltLocalY, rz*0.24),
+      new THREE.Vector3(rx*0.16, 0.22, rz*0.16),
+      new THREE.Vector3(0,0.09,0)
+    ];
+    const curve = new THREE.CatmullRomCurve3(pts);
+    const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(28));
+    const mat = new THREE.LineBasicMaterial({color:0xc4b5fd, transparent:true, opacity:0});
+    const line = new THREE.Line(geo, mat);
+    magnetGroup.add(line);
+    fieldLineMeshes.push(line);
+  }
+
+  // hall sensor — fixed on a post rooted straight into the wooden base board
+  const hallWorldPos = toWorld(hallLocalPos.x, hallLocalPos.y, hallLocalPos.z);
+  const hallBoardFoot = new THREE.Vector3(hallWorldPos.x, BOARD_TOP_Y, hallWorldPos.z);
+  rig.add(connect(hallBoardFoot, hallWorldPos, 0.05, standColor, {metalness:0.4, roughness:0.45}));
+  const hallFlange = new THREE.Mesh(new THREE.CylinderGeometry(0.10,0.10,0.03,14), steelLightMat());
+  hallFlange.position.set(hallBoardFoot.x, BOARD_TOP_Y+0.015, hallBoardFoot.z);
+  hallFlange.castShadow = true;
+  rig.add(hallFlange);
+  [[-0.07,-0.07],[-0.07,0.07],[0.07,-0.07],[0.07,0.07]].forEach(([dx,dz])=>{
+    addBoltWorld(new THREE.Vector3(hallBoardFoot.x+dx, BOARD_TOP_Y+0.03, hallBoardFoot.z+dz), new THREE.Quaternion(), 0.8);
+  });
+  const hallMarker = addSensor('hall', hallLocalPos);
+  rail.add(addRing(new THREE.Vector3(hallGateX, R-0.06, gateZ), 0xa855f7));
+
+  // belt-break state + visual damage decal (hidden until "Break Belt" is used)
+  let beltBroken = false;
+  const breakDecal = new THREE.Group();
+  const frayPatch = new THREE.Mesh(new THREE.BoxGeometry(0.22, beltThickness*1.1, centerW*0.7),
+    new THREE.MeshStandardMaterial({color:0x0c0c0c, roughness:0.95}));
+  frayPatch.position.set(hallGateX, R, 0);
+  breakDecal.add(frayPatch);
+  for(let i=-2;i<=2;i++){
+    const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.16,6),
+      new THREE.MeshStandardMaterial({color:0x9aa0a6, metalness:0.7, roughness:0.4}));
+    cord.rotation.z = Math.PI/2;
+    cord.rotation.y = (Math.random()-0.5)*0.6;
+    cord.position.set(hallGateX+(Math.random()-0.5)*0.12, R+0.03, i*(centerW*0.6/5));
+    breakDecal.add(cord);
+  }
+  breakDecal.visible = false;
+  rail.add(breakDecal);
+
+  // live camera feed used only while the break panel is open
+  const breakCamCanvas = document.getElementById('breakCam');
+  const breakCamRenderer = new THREE.WebGLRenderer({canvas:breakCamCanvas, antialias:true});
+  breakCamRenderer.setPixelRatio(Math.min(window.devicePixelRatio,1.5));
+  breakCamRenderer.setSize(breakCamCanvas.width, breakCamCanvas.height, false);
+  const breakCam = new THREE.PerspectiveCamera(46, breakCamCanvas.width/breakCamCanvas.height, 0.1, 30);
+  breakCam.position.copy(toWorld(hallGateX, R+0.85, gateZ));
+  breakCam.lookAt(toWorld(hallGateX, R, gateZ));
+
+  // =======================================================================
+  // 5 & 6. TAIL LOADING CHUTE and HEAD DISCHARGE CHUTE
+  // =======================================================================
+  const chuteMat = new THREE.MeshStandardMaterial({color:0x33393f, metalness:0.6, roughness:0.5});
+  function chutePanel(w,h,rx,rz,pos){
+    const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,0.03), chuteMat);
+    m.position.copy(pos);
+    m.rotation.x = rx; m.rotation.z = rz;
+    m.castShadow = true;
+    return m;
+  }
+  const tailChute = new THREE.Group();
+  tailChute.add(chutePanel(0.85, 1.0, 0.55,0, new THREE.Vector3(-0.42, R+0.75, 0)));       // back wall, tilted
+  tailChute.add(chutePanel(0.85, 1.0, -0.15,0, new THREE.Vector3(0.05, R+0.65, 0)));       // front lip, low tilt
+  tailChute.add(chutePanel(0.9, 1.0, 0, 0.5, new THREE.Vector3(-0.15, R+0.75, EDGE+0.15))); // right side
+  tailChute.add(chutePanel(0.9, 1.0, 0, -0.5, new THREE.Vector3(-0.15, R+0.75, -(EDGE+0.15)))); // left side
+  rail.add(tailChute);
+
+  const headChute = new THREE.Group();
+  headChute.add(chutePanel(0.9, 0.9, -0.9,0, new THREE.Vector3(L+0.55, R-0.55, 0)));
+  headChute.add(chutePanel(0.7, 0.9, 0, 0.55, new THREE.Vector3(L+0.35, R-0.55, EDGE+0.05)));
+  headChute.add(chutePanel(0.7, 0.9, 0, -0.55, new THREE.Vector3(L+0.35, R-0.55, -(EDGE+0.05))));
+  rail.add(headChute);
+
+  // =======================================================================
+  // 7. SIDE SKIRTS near the loading zone
+  // =======================================================================
+  const skirtMat = new THREE.MeshStandardMaterial({color:0x141414, roughness:0.9});
+  const skirtBracketMat = steelDarkMat();
+  for(let i=0;i<5;i++){
+    const x = 0.05*L + i*0.10*L;
+    [-1,1].forEach(sign=>{
+      const skirt = new THREE.Mesh(new THREE.BoxGeometry(0.10*L*0.9, 0.09, 0.015), skirtMat);
+      skirt.position.set(x, R+0.10, sign*(EDGE-0.02));
+      skirt.rotation.x = -sign*troughAngle*0.5;
+      rail.add(skirt);
+      const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.03,0.12,0.03), skirtBracketMat);
+      bracket.position.set(x, R+0.02, sign*(EDGE+0.03));
+      rail.add(bracket);
+    });
+  }
+
+  // =======================================================================
+  // MOTOR + GEARBOX DRIVE (rail-local), coupling guard, pulley magnet
+  // =======================================================================
+  const motorLocal = new THREE.Vector3(L-0.85, -0.28, SIDE+0.30);
+  const motorGroup = new THREE.Group();
+  motorGroup.position.copy(motorLocal);
+  const plateY = -0.40;
+  const plate = new THREE.Mesh(new THREE.BoxGeometry(1.05,0.07,0.62), steelDarkMat());
+  plate.position.set(0, plateY, 0);
+  plate.castShadow = true; plate.receiveShadow = true;
+  motorGroup.add(plate);
+  const bodyY = plateY+0.07+0.32;
+  const motorBody = new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.32,0.72,24), new THREE.MeshStandardMaterial({color:0x22344f, metalness:0.5, roughness:0.42}));
+  motorBody.rotation.z = Math.PI/2;
+  motorBody.position.set(0.16, bodyY, 0);
+  motorBody.castShadow = true;
+  motorGroup.add(motorBody);
+  const gearbox = new THREE.Mesh(new THREE.BoxGeometry(0.32,0.38,0.38), new THREE.MeshStandardMaterial({color:0x232b32, metalness:0.55, roughness:0.4}));
+  gearbox.position.set(motorBody.position.x-0.50, bodyY, 0);
+  gearbox.castShadow = true;
+  motorGroup.add(gearbox);
+  // small gearbox inspection-cover plate + bolts, for detail
+  const inspCover = new THREE.Mesh(new THREE.BoxGeometry(0.02,0.16,0.16), new THREE.MeshStandardMaterial({color:0x1c232b, metalness:0.5, roughness:0.5}));
+  inspCover.position.set(gearbox.position.x-0.17, bodyY, 0);
+  motorGroup.add(inspCover);
+  [[-0.06,-0.06],[-0.06,0.06],[0.06,-0.06],[0.06,0.06]].forEach(([dy,dz])=>{
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(0.012,0.012,0.03,6), boltMatBase);
+    b.rotation.z = Math.PI/2;
+    b.position.set(gearbox.position.x-0.185, bodyY+dy, dz);
+    motorGroup.add(b);
+  });
+  // dense cooling fins along the motor body (real induction-motor look)
+  for(let i=-6;i<=6;i++){
+    const fin = new THREE.Mesh(new THREE.TorusGeometry(0.335,0.011,6,22), new THREE.MeshStandardMaterial({color:0x18202a, metalness:0.6, roughness:0.32}));
+    fin.rotation.y = Math.PI/2;
+    fin.position.set(motorBody.position.x + i*0.052, bodyY, 0);
+    motorGroup.add(fin);
+  }
+  // rear fan cover (grille) at the non-drive end
+  const fanCover = new THREE.Mesh(new THREE.CylinderGeometry(0.30,0.30,0.04,24), new THREE.MeshStandardMaterial({map:fanGrilleTex, color:0x9aa3ac, metalness:0.4, roughness:0.55}));
+  fanCover.rotation.z = Math.PI/2;
+  fanCover.position.set(motorBody.position.x+0.38, bodyY, 0);
+  fanCover.castShadow = true;
+  motorGroup.add(fanCover);
+  const termBox = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.12,0.18), new THREE.MeshStandardMaterial({color:0x191d21, roughness:0.6}));
+  termBox.position.set(motorBody.position.x, bodyY+0.34, 0);
+  motorGroup.add(termBox);
+  // rating nameplate on the body
+  const nameplate = new THREE.Mesh(new THREE.BoxGeometry(0.02,0.10,0.16), new THREE.MeshStandardMaterial({color:0xc9c2a6, metalness:0.3, roughness:0.5}));
+  nameplate.rotation.y = Math.PI/2;
+  nameplate.position.set(motorBody.position.x, bodyY-0.02, 0.335);
+  motorGroup.add(nameplate);
+  // cable entry glands under terminal box
+  [-0.04,0.04].forEach(dz=>{
+    const gland = new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,0.05,8), boltMatBase);
+    gland.position.set(motorBody.position.x, bodyY+0.28, dz);
+    motorGroup.add(gland);
+  });
+  // visible motor-to-gearbox shaft stub
+  const midShaft = new THREE.Mesh(new THREE.CylinderGeometry(0.045,0.045,0.10,12), new THREE.MeshStandardMaterial({map:steelTex, metalness:0.75, roughness:0.35}));
+  midShaft.rotation.z = Math.PI/2;
+  midShaft.position.set(gearbox.position.x+0.21, bodyY, 0);
+  motorGroup.add(midShaft);
+  const motorSprocket = new THREE.Mesh(new THREE.CylinderGeometry(0.12,0.12,0.10,16), steelLightMat());
+  motorSprocket.rotation.z = Math.PI/2;
+  motorSprocket.position.set(gearbox.position.x-0.24, bodyY, 0);
+  motorGroup.add(motorSprocket);
+  // mounting feet with bolt heads
+  [[-0.35,-0.24],[-0.35,0.24],[0.35,-0.24],[0.35,0.24]].forEach(([dx,dz])=>{
+    const foot = new THREE.Mesh(new THREE.BoxGeometry(0.07,0.03,0.07), boltMatBase);
+    foot.position.set(dx, plateY+0.045, dz);
+    motorGroup.add(foot);
+    const boltHead = new THREE.Mesh(new THREE.CylinderGeometry(0.016,0.016,0.02,6), boltMatBase);
+    boltHead.position.set(dx, plateY+0.065, dz);
+    motorGroup.add(boltHead);
+  });
+  motorGroup.userData.info = 'motor';
+  motorGroup.userData.spinMesh = motorSprocket;
+  rail.add(motorGroup);
+  interactive.push(motorGroup);
+  workLight.position.copy(toWorld(motorLocal.x, motorLocal.y+0.7, motorLocal.z));
+
+  [-1,1].forEach(sign=>{
+    const standPt = new THREE.Vector3(L, motorLocal.y+plateY, sign*(W/2+0.12));
+    const platePt = new THREE.Vector3(motorLocal.x, motorLocal.y+plateY, motorLocal.z + sign*0.29);
+    rail.add(connect(standPt, platePt, 0.045, standColor, {metalness:0.7,roughness:0.42}));
+  });
+
+  const motorSprocketLocal = motorLocal.clone().add(new THREE.Vector3(motorSprocket.position.x, motorSprocket.position.y, motorSprocket.position.z));
+  const shaftExtLocal = new THREE.Vector3(L, 0, W/2+0.28);
+  rail.add(connect(motorSprocketLocal, shaftExtLocal, 0.035, 0xd99a3a, {roughness:0.4, metalness:0.6}));
+  // coupling flanges at each end, so the drive reads as a real shaft coupling
+  [motorSprocketLocal, shaftExtLocal].forEach(pt=>{
+    const flange = new THREE.Mesh(new THREE.CylinderGeometry(0.075,0.075,0.03,16), steelLightMat());
+    flange.rotation.x = Math.PI/2;
+    flange.position.copy(pt);
+    rail.add(flange);
+  });
+  // coupling guard — partial open shell over the chain run
+  const guardShape = new THREE.CylinderGeometry(0.30,0.30,0.30,16,1,true, 0.3, Math.PI*1.1);
+  const guardMesh = new THREE.Mesh(guardShape, new THREE.MeshStandardMaterial({color:0x22272c, metalness:0.5, roughness:0.5, side:THREE.DoubleSide}));
+  guardMesh.position.copy(motorSprocketLocal.clone().lerp(shaftExtLocal,0.5));
+  guardMesh.rotation.x = Math.PI/2;
+  rail.add(guardMesh);
+
+  // Hall-effect sensor + its magnet are built near the joint/splice and the
+  // idler stations further below (magnet rides the belt at the joint; the
+  // sensor is fixed underneath the belt).
+
+  // =======================================================================
+  // SENSOR ENCLOSURES (small box + integrated bracket arm + LED + cable)
+  // =======================================================================
+  function makeSensorEnclosure(key, size){
+    size = size||0.20;
+    const info = SENSOR_INFO[key];
+    const group = new THREE.Group();
+    const box = new THREE.Mesh(new THREE.BoxGeometry(size,size*0.82,size*0.82), new THREE.MeshStandardMaterial({color:0x2a2f34, roughness:0.55, metalness:0.35}));
+    box.castShadow = true;
+    group.add(box);
+    const arm = new THREE.Mesh(new THREE.CylinderGeometry(0.018,0.018,size*1.15,8), boltMatBase);
+    arm.rotation.z = Math.PI/2;
+    arm.position.set(-size*1.05,0,0);
+    group.add(arm);
+    const led = new THREE.Mesh(new THREE.SphereGeometry(size*0.13,10,10), new THREE.MeshStandardMaterial({color:info.color, emissive:info.color, emissiveIntensity:0.7}));
+    led.position.set(size*0.3, size*0.5, size*0.42);
+    group.add(led);
+    group.userData.info = key;
+    group.userData.led = led;
+    return group;
+  }
+  function addSensor(key, pos, opts){
+    opts = opts||{};
+    const marker = makeSensorEnclosure(key, opts.size);
+    marker.position.copy(pos);
+    if(opts.lookDir) marker.lookAt(pos.clone().add(opts.lookDir));
+    rail.add(marker);
+    interactive.push(marker);
+    sensorMarkers.push(marker);
+    if(opts.cable!==false){
+      const trayPt = new THREE.Vector3(pos.x, TRAY_Y, TRAY_Z);
+      rail.add(connect(pos, trayPt, 0.013, 0x101214, {metalness:0.3, roughness:0.7, castShadow:false}));
+    }
+    return marker;
+  }
+  function addBeam(fromPos, toPos, color, r0, r1){
+    const dv = toPos.clone().sub(fromPos);
+    const len = dv.length();
+    const geo = new THREE.CylinderGeometry(r0, r1, len, 12, 1, true);
+    const mat = new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.13, depthWrite:false, side:THREE.DoubleSide});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.copy(fromPos).add(dv.clone().multiplyScalar(0.5));
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0), dv.clone().normalize());
+    return mesh;
+  }
+  function addRing(pos, color){
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.16,0.012,8,24), new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.35}));
+    ring.position.copy(pos);
+    ring.rotation.x = Math.PI/2;
+    return ring;
+  }
+  function makeTextSprite(text, color){
+    const c = document.createElement('canvas'); c.width=256; c.height=64;
+    const ctx = c.getContext('2d');
+    ctx.font='bold 30px Segoe UI, sans-serif';
+    ctx.fillStyle=color;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText(text,128,32);
+    const tex = new THREE.CanvasTexture(c);
+    const mat = new THREE.SpriteMaterial({map:tex, transparent:true, opacity:0, depthWrite:false});
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(1.15,0.29,1);
+    return sprite;
+  }
+
+  // cable tray (trunk) — runs most of the length on the +Z stringer
+  const tray = new THREE.Mesh(new THREE.BoxGeometry(L*0.80, 0.05, 0.10), new THREE.MeshStandardMaterial({color:0x3a4148, metalness:0.55, roughness:0.5}));
+  tray.position.set(L*0.40, TRAY_Y, TRAY_Z);
+  rail.add(tray);
+
+  // 1. Camera — above the joint's usual pass zone, aimed down at it
+  const camPos = new THREE.Vector3(0.5*L, R+0.85, 0);
+  addSensor('camera', camPos, {lookDir:new THREE.Vector3(0,-1,0)});
+  const camBeamMesh = addBeam(camPos, new THREE.Vector3(0.5*L,R+0.03,0), 0x3b82f6, 0.02, 0.22);
+  rail.add(camBeamMesh);
+
+  // AI-vision fault overlay: bounding box + label, travels with the joint,
+  // hidden until a fault is detected
+  const detectionBoxEdges = new THREE.EdgesGeometry(new THREE.BoxGeometry(0.55,0.4,W*0.95));
+  const detectionBox = new THREE.LineSegments(detectionBoxEdges, new THREE.LineBasicMaterial({color:0xff3b3b, transparent:true, opacity:0}));
+  detectionBox.position.set(0,R+0.12,0);
+  jointGroup.add(detectionBox);
+  const faultLabel = makeTextSprite('FAULT DETECTED', '#ff5a5a');
+  faultLabel.position.set(0, R+0.58, 0);
+  jointGroup.add(faultLabel);
+
+  // 2. Thermal — beside the joint zone, aimed at the splice
+  const thermalPos = new THREE.Vector3(0.5*L+0.35, R+0.15, EDGE);
+  addSensor('thermal', thermalPos);
+  rail.add(addBeam(thermalPos, new THREE.Vector3(0.5*L+0.35, R+0.02, 0), 0xef4444, 0.015, 0.16));
+
+  // 3. Load cell — at an idler support bracket
+  const loadIdlerX = IDLER_T[3]*L;
+  const loadcellPos = new THREE.Vector3(loadIdlerX, R-idlerR-0.30, SIDE*0.7);
+  addSensor('loadcell', loadcellPos);
+  rail.add(addRing(new THREE.Vector3(loadIdlerX, R-idlerR-0.05, 0), 0x22c55e));
+
+  // 4. Hall-effect — see the MFL gate built above (board-mounted, stationary)
+
+  // 5. Vibration — bolted to the frame near an idler support
+  const vibX = IDLER_T[1]*L;
+  const vibrationPos = new THREE.Vector3(vibX, stringerY+0.12, -(W/2+0.14));
+  addSensor('vibration', vibrationPos);
+  rail.add(addRing(vibrationPos, 0xf59e0b));
+
+  // 6. Moisture — near the loading zone
+  const moisturePos = new THREE.Vector3(0.10*L, R+0.55, -SIDE*0.55);
+  addSensor('moisture', moisturePos);
+
+  // 7. Ultrasonic — aimed at the belt edge
+  const ultraPos = new THREE.Vector3(0.85*L, R+0.10, -(EDGE+0.25));
+  addSensor('ultrasonic', ultraPos);
+  rail.add(addBeam(ultraPos, new THREE.Vector3(0.85*L, R+0.03, -EDGE), 0xeab308, 0.01, 0.05));
+
+  // 8. Gas/smoke — near the drive/discharge end
+  const gasPos = motorLocal.clone().add(new THREE.Vector3(0.35,0.85,0.25));
+  addSensor('gas', gasPos);
+
+  // 9. Tachometer — at the motor shaft
+  const tachoPos = motorLocal.clone().add(new THREE.Vector3(-0.72,0.0,0));
+  addSensor('tacho', tachoPos, {cable:false});
+  rail.add(connect(tachoPos, new THREE.Vector3(tachoPos.x,TRAY_Y,TRAY_Z), 0.013, 0x101214, {metalness:0.3,roughness:0.7,castShadow:false}));
+
+  // =======================================================================
+  // STEEL-CORD BREAK DETECTOR GANTRY (Phase-2 concept, industrial finish)
+  // =======================================================================
+  const CORD_T = 0.16;
+  const cordGroup = new THREE.Group();
+  const cordX = CORD_T*L;
+  [-1,1].forEach(sign=>{
+    const postTop = new THREE.Vector3(cordX, R+0.75, sign*(W/2+0.16));
+    const postBottom = new THREE.Vector3(cordX, -(R+0.28), sign*(W/2+0.16));
+    cordGroup.add(connect(postBottom, postTop, 0.045, 0x30363d, {metalness:0.55,roughness:0.5}));
+  });
+  const barA = new THREE.Vector3(cordX, R+0.75, -(W/2+0.16));
+  const barB = new THREE.Vector3(cordX, R+0.75, (W/2+0.16));
+  cordGroup.add(connect(barA, barB, 0.05, 0x30363d, {metalness:0.55,roughness:0.5}));
+  const cordBox = new THREE.Mesh(new THREE.BoxGeometry(0.34,0.22,0.20), new THREE.MeshStandardMaterial({color:0x1c2228, roughness:0.55}));
+  const cordBoxPos = barA.clone().lerp(barB,0.5).add(new THREE.Vector3(0,0.16,0));
+  cordBox.position.copy(cordBoxPos);
+  cordGroup.add(cordBox);
+  const beacon = new THREE.Mesh(new THREE.SphereGeometry(0.07,14,14), new THREE.MeshStandardMaterial({color:0xff5252, emissive:0xff5252, emissiveIntensity:0.6}));
+  beacon.position.copy(cordBoxPos).add(new THREE.Vector3(0,0.17,0));
+  cordGroup.add(beacon);
+  cordGroup.userData.info = 'cordbreak';
+  cordGroup.userData.beacon = beacon;
+  rail.add(cordGroup);
+  interactive.push(cordGroup);
+
+  // =======================================================================
+  // CONTROL BOX + POWER SUPPLY (world space, near the drive/head end —
+  // clustered with the motor electronics) + trunk cable
+  // =======================================================================
+  const piTex = makeRaspberryPiTexture();
+  const headBoxAnchor = toWorld(L*0.90, stringerY, W/2+0.14);
+  const controlBoxPos = new THREE.Vector3(headBoxAnchor.x, BOARD_TOP_Y+0.81, headBoxAnchor.z+0.40);
+  const controlGroup = new THREE.Group();
+  const cbBody = new THREE.Mesh(new THREE.BoxGeometry(0.40,0.52,0.24), new THREE.MeshStandardMaterial({color:0x2f353a, roughness:0.5, metalness:0.35}));
+  cbBody.castShadow = true;
+  controlGroup.add(cbBody);
+  const doorEdges = new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(0.34,0.44,0.01)), new THREE.LineBasicMaterial({color:0x0e1113}));
+  doorEdges.position.set(0,0,0.125);
+  controlGroup.add(doorEdges);
+  // Raspberry Pi visible through the enclosure's door window
+  const piWindow = new THREE.Mesh(new THREE.PlaneGeometry(0.30,0.38), new THREE.MeshStandardMaterial({map:piTex, roughness:0.6, metalness:0.1}));
+  piWindow.position.set(0,0,0.122);
+  piWindow.userData.info = 'computenode';
+  controlGroup.add(piWindow);
+  interactive.push(piWindow);
+  const hazardStrip = new THREE.Mesh(new THREE.BoxGeometry(0.40,0.05,0.01), new THREE.MeshBasicMaterial({map:hazardTex}));
+  hazardStrip.position.set(0,-0.28,0.126);
+  controlGroup.add(hazardStrip);
+  [0x4caf6d,0xe0a83e,0xd94b3f].forEach((c,i)=>{
+    const led = new THREE.Mesh(new THREE.SphereGeometry(0.014,8,8), new THREE.MeshStandardMaterial({color:c, emissive:c, emissiveIntensity:0.8}));
+    led.position.set(-0.12+i*0.06, 0.18, 0.13);
+    controlGroup.add(led);
+  });
+  [-0.10,0.10].forEach(dx=>{
+    const gland = new THREE.Mesh(new THREE.CylinderGeometry(0.02,0.02,0.05,8), boltMatBase);
+    gland.rotation.x = Math.PI/2;
+    gland.position.set(dx,-0.26,0.02);
+    controlGroup.add(gland);
+  });
+  const antenna = new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.006,0.16,6), boltMatBase);
+  antenna.position.set(0.15,0.34,0);
+  controlGroup.add(antenna);
+  const boxStand = new THREE.Mesh(new THREE.CylinderGeometry(0.03,0.04,0.85,8), steelDarkMat());
+  boxStand.position.set(0,-0.85,0);
+  controlGroup.add(boxStand);
+  controlGroup.position.copy(controlBoxPos);
+  controlGroup.userData.info = 'controlbox';
+  rig.add(controlGroup);
+  interactive.push(controlGroup);
+
+  // power supply unit, mounted right beside the control box
+  const powerSupplyPos = controlBoxPos.clone().add(new THREE.Vector3(0.50,-0.12,0));
+  const psuGroup = new THREE.Group();
+  const psuBody = new THREE.Mesh(new THREE.BoxGeometry(0.26,0.34,0.20), new THREE.MeshStandardMaterial({color:0x53585d, metalness:0.55, roughness:0.4}));
+  psuBody.castShadow = true;
+  psuGroup.add(psuBody);
+  for(let i=-2;i<=2;i++){
+    const slot = new THREE.Mesh(new THREE.BoxGeometry(0.16,0.012,0.004), new THREE.MeshStandardMaterial({color:0x1a1d20}));
+    slot.position.set(0, i*0.045, 0.102);
+    psuGroup.add(slot);
+  }
+  const swRocker = new THREE.Mesh(new THREE.BoxGeometry(0.02,0.014,0.012), new THREE.MeshStandardMaterial({color:0xd94b3f}));
+  swRocker.position.set(-0.08,-0.13,0.108);
+  psuGroup.add(swRocker);
+  const psuLed = new THREE.Mesh(new THREE.SphereGeometry(0.011,8,8), new THREE.MeshStandardMaterial({color:0x4caf6d, emissive:0x4caf6d, emissiveIntensity:0.8}));
+  psuLed.position.set(0.09,-0.13,0.105);
+  psuGroup.add(psuLed);
+  const psuStand = new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.038,0.70,8), steelDarkMat());
+  psuStand.position.set(0,-0.52,0);
+  psuGroup.add(psuStand);
+  psuGroup.position.copy(powerSupplyPos);
+  psuGroup.userData.info = 'powersupply';
+  rig.add(psuGroup);
+  interactive.push(psuGroup);
+  rig.add(connect(controlBoxPos.clone().add(new THREE.Vector3(0.20,-0.05,0)), powerSupplyPos.clone().add(new THREE.Vector3(-0.13,0.05,0)), 0.012, 0xc0392b, {metalness:0.3,roughness:0.6}));
+
+  const trayHeadWorld = toWorld(L*0.90, TRAY_Y, TRAY_Z);
+  rig.add(connect(trayHeadWorld, controlBoxPos.clone().add(new THREE.Vector3(0,0.15,-0.10)), 0.02, 0x101214, {metalness:0.3,roughness:0.7}));
+
+  // =======================================================================
+  // BOLTS — build the single InstancedMesh from all collected placements
+  // =======================================================================
+  const boltGeo = new THREE.CylinderGeometry(0.03,0.034,0.055,8);
+  const boltInstanced = new THREE.InstancedMesh(boltGeo, boltMatBase, Math.max(1,boltPlacements.length));
+  boltPlacements.forEach((b,i)=>{
+    const m = new THREE.Matrix4().compose(b.pos, b.quat, new THREE.Vector3(b.scale,b.scale,b.scale));
+    boltInstanced.setMatrixAt(i,m);
+  });
+  boltInstanced.instanceMatrix.needsUpdate = true;
+  boltInstanced.castShadow = true;
+  scene.add(boltInstanced);
+
+  // =======================================================================
+  // IRON ORE — spawn, ride the trough, discharge arc, respawn
+  // =======================================================================
+  const ORE_COUNT = 40;
+  const ores = [];
+  for(let i=0;i<ORE_COUNT;i++){
+    const radius = 0.16+Math.random()*0.15;
+    const geo = makeOreGeometry(radius);
+    const mat = new THREE.MeshStandardMaterial({color: oreColors[Math.floor(Math.random()*oreColors.length)], roughness:1, flatShading:true});
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.castShadow = true; mesh.receiveShadow = true;
+    const data = {
+      mesh, radius,
+      t: (i/ORE_COUNT) + Math.random()*0.02,
+      lane: (Math.random()-0.5)*(W-0.65),
+      bump: 0.10 + radius*0.7 + Math.random()*0.08,
+      speedMul: 0.9+Math.random()*0.22,
+      rx:(Math.random()-0.5)*2.4, ry:(Math.random()-0.5)*2.4, rz:(Math.random()-0.5)*2.4
+    };
+    rail.add(mesh);
+    ores.push(data);
+  }
+  function oreLocalXY(o){
+    const t = o.t;
+    let x,y;
+    if(t<0.05){
+      const f=t/0.05;
+      x = 0.02*L + f*0.03*L;
+      y = THREE.MathUtils.lerp(R+1.05, R+o.bump, f*f);
+    } else if(t<0.90){
+      const f=(t-0.05)/0.85;
+      x = 0.05*L + f*0.85*L;
+      y = R+o.bump + 0.022*Math.sin(f*Math.PI*IDLER_T.length*2);
+    } else {
+      const f=(t-0.90)/0.10;
+      x = 0.90*L + f*0.16*L;
+      y = (R+o.bump) - f*f*1.5;
+    }
+    return {x,y};
+  }
+  function placeOre(o){
+    const {x,y} = oreLocalXY(o);
+    o.mesh.position.set(x,y,o.lane);
+  }
+  ores.forEach(placeOre);
+
+  // =======================================================================
+  // ORE STOCKPILE — grows at the discharge point, then gradually hauled away
+  // =======================================================================
+  const headStandFootWorld = toWorld(L, stringerY, 0);
+  const pileBaseWorld = new THREE.Vector3(headStandFootWorld.x+0.95, BOARD_TOP_Y, headStandFootWorld.z-0.60);
+  function makePileGeometry(){
+    const geo = new THREE.ConeGeometry(1,1,11,3);
+    geo.translate(0,0.5,0);
+    const pos = geo.attributes.position;
+    for(let i=0;i<pos.count;i++){
+      const jitter = 0.8+Math.random()*0.35;
+      pos.setXYZ(i, pos.getX(i)*jitter, pos.getY(i), pos.getZ(i)*jitter);
+    }
+    geo.computeVertexNormals();
+    return geo;
+  }
+  const oreMountain = new THREE.Mesh(makePileGeometry(), new THREE.MeshStandardMaterial({color:0x7a3d22, roughness:1, flatShading:true}));
+  oreMountain.position.copy(pileBaseWorld);
+  oreMountain.scale.set(0.01,0.01,0.01);
+  oreMountain.castShadow = true; oreMountain.receiveShadow = true;
+  rig.add(oreMountain);
+  const PILE_CYCLE = 46;
+
+  // =======================================================================
+  // DUST PARTICLES near loading/discharge (rail-local, subtle)
+  // =======================================================================
+  const DUST_COUNT = 220;
+  const dustPositions = new Float32Array(DUST_COUNT*3);
+  const dustSeeds = [];
+  for(let i=0;i<DUST_COUNT;i++){
+    const nearTail = Math.random()<0.6;
+    const baseX = nearTail ? Math.random()*0.14*L : L*0.85+Math.random()*0.20*L;
+    const x = baseX;
+    const y = R + Math.random()*0.9;
+    const z = (Math.random()-0.5)*W*1.3;
+    dustPositions[i*3]=x; dustPositions[i*3+1]=y; dustPositions[i*3+2]=z;
+    dustSeeds.push({riseSpeed:0.04+Math.random()*0.06, driftX:(Math.random()-0.5)*0.02, baseY:y});
+  }
+  const dustGeo = new THREE.BufferGeometry();
+  dustGeo.setAttribute('position', new THREE.BufferAttribute(dustPositions,3));
+  const dustMat = new THREE.PointsMaterial({color:0xcfc7ba, size:0.045, transparent:true, opacity:0.28, depthWrite:false});
+  const dustPoints = new THREE.Points(dustGeo, dustMat);
+  rail.add(dustPoints);
+
+  // =======================================================================
+  // ENVIRONMENT — concrete floor, background columns, overhead pipe, railing
+  // =======================================================================
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(90,90), new THREE.MeshStandardMaterial({map:concreteTex, color:0x9199a0, roughness:0.92, metalness:0.04}));
+  ground.rotation.x = -Math.PI/2;
+  ground.receiveShadow = true;
+  scene.add(ground);
+
+  const columnMat = steelDarkMat();
+  [[-16,-11],[15,-13],[-6,-15]].forEach(([x,z])=>{
+    const col = new THREE.Mesh(new THREE.CylinderGeometry(0.28,0.30,9,12), columnMat);
+    col.position.set(x,4.5,z);
+    col.castShadow = true;
+    scene.add(col);
+  });
+  const pipe = new THREE.Mesh(new THREE.CylinderGeometry(0.14,0.14,26,10), new THREE.MeshStandardMaterial({color:0x454c52, metalness:0.6, roughness:0.45}));
+  pipe.rotation.z = Math.PI/2;
+  pipe.position.set(-2, 8.2, -12);
+  scene.add(pipe);
+
+  // short safety railing along one side, near the tail
+  const railTopWorld = toWorld(-1, 0.05, W/2+1.2);
+  const railMat2 = new THREE.MeshStandardMaterial({color:0xcf9a2e, metalness:0.4, roughness:0.5});
+  for(let i=0;i<6;i++){
+    const p0 = toWorld(-1+i*1.6, 0, W/2+1.2);
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.025,0.025,0.9,8), railMat2);
+    post.position.set(p0.x,0.45,p0.z);
+    scene.add(post);
+  }
+  for(let i=0;i<5;i++){
+    const a = toWorld(-1+i*1.6, 0, W/2+1.2);
+    const b = toWorld(-1+(i+1)*1.6, 0, W/2+1.2);
+    scene.add(connect(new THREE.Vector3(a.x,0.85,a.z), new THREE.Vector3(b.x,0.85,b.z), 0.018, 0xcf9a2e, {metalness:0.4,roughness:0.5}));
+    scene.add(connect(new THREE.Vector3(a.x,0.45,a.z), new THREE.Vector3(b.x,0.45,b.z), 0.018, 0xcf9a2e, {metalness:0.4,roughness:0.5}));
+  }
+
+  // =======================================================================
+  // CAMERA CONTROLS — drag/wheel orbit with smoothing + presets
+  // =======================================================================
+  let camTarget = new THREE.Vector3(0,3.2,0);
+  let goalTarget = camTarget.clone();
+  let camDist=13, camTheta=0.78, camPhi=1.12;
+  let goalDist=camDist, goalTheta=camTheta, goalPhi=camPhi;
+  let dragging=false, lastX=0, lastY=0;
+
+  function updateCameraTransform(dt){
+    const s = Math.min(1, dt*4.2);
+    camDist += (goalDist-camDist)*s;
+    camTheta += (goalTheta-camTheta)*s;
+    camPhi += (goalPhi-camPhi)*s;
+    camTarget.lerp(goalTarget, s);
+    camera.position.x = camTarget.x + camDist*Math.sin(camPhi)*Math.sin(camTheta);
+    camera.position.y = camTarget.y + camDist*Math.cos(camPhi);
+    camera.position.z = camTarget.z + camDist*Math.sin(camPhi)*Math.cos(camTheta);
+    camera.lookAt(camTarget);
+  }
+  updateCameraTransform(1);
+
+  const dom = renderer.domElement;
+  dom.addEventListener('mousedown', e=>{ dragging=true; lastX=e.clientX; lastY=e.clientY; dom.classList.add('dragging'); });
+  window.addEventListener('mouseup', ()=>{ dragging=false; dom.classList.remove('dragging'); });
+  window.addEventListener('mousemove', e=>{
+    if(dragging){
+      const dx=e.clientX-lastX, dy=e.clientY-lastY;
+      camTheta -= dx*0.0055; camPhi = Math.min(1.5, Math.max(0.28, camPhi - dy*0.0055));
+      goalTheta = camTheta; goalPhi = camPhi;
+      lastX=e.clientX; lastY=e.clientY;
+    }
+    onHoverMove(e);
+  });
+  dom.addEventListener('wheel', e=>{
+    e.preventDefault();
+    camDist = Math.min(36, Math.max(3.5, camDist+e.deltaY*0.012));
+    goalDist = camDist;
+  }, {passive:false});
+  let lastTouchDist=null;
+  dom.addEventListener('touchstart', e=>{ if(e.touches.length===1){ dragging=true; lastX=e.touches[0].clientX; lastY=e.touches[0].clientY; } }, {passive:true});
+  dom.addEventListener('touchmove', e=>{
+    if(e.touches.length===1 && dragging){
+      const dx=e.touches[0].clientX-lastX, dy=e.touches[0].clientY-lastY;
+      camTheta -= dx*0.0055; camPhi = Math.min(1.5, Math.max(0.28, camPhi - dy*0.0055));
+      goalTheta=camTheta; goalPhi=camPhi;
+      lastX=e.touches[0].clientX; lastY=e.touches[0].clientY;
+    } else if(e.touches.length===2){
+      const d = Math.hypot(e.touches[0].clientX-e.touches[1].clientX, e.touches[0].clientY-e.touches[1].clientY);
+      if(lastTouchDist!==null){ camDist = Math.min(36, Math.max(3.5, camDist-(d-lastTouchDist)*0.03)); goalDist=camDist; }
+      lastTouchDist=d;
+    }
+  }, {passive:true});
+  dom.addEventListener('touchend', ()=>{ dragging=false; lastTouchDist=null; }, {passive:true});
+
+  const DEFAULT_VIEW = {dist:13, theta:0.78, phi:1.12, target:new THREE.Vector3(0,3.2,0)};
+  document.getElementById('btn-reset').addEventListener('click', ()=>{
+    goalDist=DEFAULT_VIEW.dist; goalTheta=DEFAULT_VIEW.theta; goalPhi=DEFAULT_VIEW.phi; goalTarget.copy(DEFAULT_VIEW.target);
+  });
+
+  const PRESETS = {
+    overall: ()=>({dist:13, theta:0.78, phi:1.12, target:toWorld(L*0.5,0.6,0)}),
+    joint:   ()=>({dist:4.2, theta:0.5, phi:1.02, target:toWorld(L*0.5,R,0)}),
+    drive:   ()=>({dist:5.0, theta:1.15, phi:1.05, target:toWorld(L*0.94,0,SIDE*0.5)}),
+    sensors: ()=>({dist:8.5, theta:0.35, phi:0.9, target:toWorld(L*0.5,R+0.6,0)}),
+    loading: ()=>({dist:5.2, theta:2.4, phi:1.05, target:toWorld(L*0.06,0,0)})
+  };
+  document.querySelectorAll('#presets button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const p = PRESETS[btn.dataset.preset]();
+      goalDist=p.dist; goalTheta=p.theta; goalPhi=p.phi; goalTarget.copy(p.target);
+    });
+  });
+
+  // =======================================================================
+  // HOVER / RAYCAST TOOLTIP (with dim-others)
+  // =======================================================================
+  const raycaster = new THREE.Raycaster();
+  const mouseNDC = new THREE.Vector2();
+  const tooltip = document.getElementById('tooltip');
+  let hovered = null;
+  let mouseClientX=0, mouseClientY=0;
+
+  function findInfoParent(obj){
+    let o=obj;
+    while(o){ if(o.userData && o.userData.info) return o; o=o.parent; }
+    return null;
+  }
+  function onHoverMove(e){
+    mouseClientX=e.clientX; mouseClientY=e.clientY;
+    if(dragging) return;
+    mouseNDC.x=(e.clientX/window.innerWidth)*2-1;
+    mouseNDC.y=-(e.clientY/window.innerHeight)*2+1;
+    raycaster.setFromCamera(mouseNDC, camera);
+    const hits = raycaster.intersectObjects(interactive, true);
+    let target = hits.length ? findInfoParent(hits[0].object) : null;
+    if(target!==hovered){
+      if(hovered) hovered.scale.set(1,1,1);
+      hovered = target;
+      if(hovered){
+        hovered.scale.set(1.18,1.18,1.18);
+        const info = SENSOR_INFO[hovered.userData.info];
+        tooltip.innerHTML = `<span class="t-tag">${info.tag}</span><span class="t-name">${info.name}</span>${info.desc}`;
+        tooltip.classList.add('visible');
+        dom.style.cursor='pointer';
+        sensorMarkers.forEach(m=>{ if(m!==hovered && m.userData.led) m.userData.led.material.emissiveIntensity = 0.2; });
+        if(hovered.userData.led) hovered.userData.led.material.emissiveIntensity = 1.4;
+      } else {
+        tooltip.classList.remove('visible');
+        dom.style.cursor='grab';
+        sensorMarkers.forEach(m=>{ if(m.userData.led) m.userData.led.material.emissiveIntensity = 0.7; });
+      }
+    }
+    if(hovered){
+      tooltip.style.left = Math.min(window.innerWidth-280, mouseClientX+16)+'px';
+      tooltip.style.top = Math.min(window.innerHeight-120, mouseClientY+16)+'px';
+    }
+  }
+
+  // =======================================================================
+  // FAULT SIMULATION + STATUS PANEL
+  // =======================================================================
+  const btnFault = document.getElementById('btn-fault');
+  const spDot=document.getElementById('sp-dot'), spStatus=document.getElementById('sp-status');
+  const spSpeed=document.getElementById('sp-speed'), spTemp=document.getElementById('sp-temp');
+  const spVib=document.getElementById('sp-vib'), spTension=document.getElementById('sp-tension');
+  const jointBlock=document.getElementById('jointStatusBlock');
+  const jsTemp=document.getElementById('js-temp'), jsPos=document.getElementById('js-pos');
+
+  let faultActive=false, faultStart=0;
+  let simTemp=46, simVibLevel=0, simTensionLevel=0; // 0..1 intensity for vib/tension
+  btnFault.addEventListener('click', ()=>{
+    if(faultActive || beltBroken) return;
+    faultActive=true; faultStart=clock.elapsedTime;
+    btnFault.classList.add('firing'); btnFault.textContent='⚠ Fault sequence running…';
+  });
+  function zoneFromT(t){ return t<0.33?'TAIL-SECTION': t<0.66?'MID-SECTION':'HEAD-SECTION'; }
+
+  const breakPanel = document.getElementById('breakPanel');
+  const btnBreak = document.getElementById('btn-break');
+  const btnRepair = document.getElementById('btn-repair');
+  const bpLoc = document.getElementById('bp-loc');
+  btnBreak.addEventListener('click', ()=>{
+    if(beltBroken) return;
+    beltBroken = true;
+    breakDecal.visible = true;
+    breakPanel.classList.remove('hidden');
+    bpLoc.textContent = zoneFromT(HALL_T);
+    btnBreak.disabled = true;
+  });
+  btnRepair.addEventListener('click', ()=>{
+    beltBroken = false;
+    breakDecal.visible = false;
+    breakPanel.classList.add('hidden');
+    btnBreak.disabled = false;
+  });
+
+  function updateFault(dt){
+    if(beltBroken){
+      spDot.classList.add('warn'); spStatus.textContent='SYSTEM STATUS: WARNING — CORD BREAK';
+      spVib.textContent='HIGH'; spTension.textContent='ABNORMAL';
+      jointBlock.classList.add('hidden');
+      return;
+    }
+    if(!faultActive){
+      simTemp += (46-simTemp)*Math.min(1,dt*0.6);
+      simVibLevel += (0-simVibLevel)*Math.min(1,dt*0.6);
+      simTensionLevel += (0-simTensionLevel)*Math.min(1,dt*0.6);
+      spDot.classList.remove('warn'); spStatus.textContent='SYSTEM STATUS: NORMAL';
+      spVib.textContent='NORMAL'; spTension.textContent='NORMAL';
+      jointBlock.classList.add('hidden');
+      return;
+    }
+    const el = clock.elapsedTime - faultStart;
+    if(el<1.2){ spStatus.textContent='SCANNING JOINT…'; }
+    else if(el<2.7){ simTemp += (68-simTemp)*Math.min(1,dt*1.1); spStatus.textContent='THERMAL RISING…'; }
+    else if(el<4.0){ simVibLevel += (1-simVibLevel)*Math.min(1,dt*1.3); spStatus.textContent='VIBRATION ABNORMAL…'; spVib.textContent='HIGH'; }
+    else if(el<5.2){ simTensionLevel += (1-simTensionLevel)*Math.min(1,dt*1.3); spStatus.textContent='TENSION ABNORMAL…'; spTension.textContent='ABNORMAL'; }
+    else if(el<6.2){ spStatus.textContent='CONFIRMING POSITION…'; }
+    else if(el<13){
+      spDot.classList.add('warn'); spStatus.textContent='SYSTEM STATUS: WARNING';
+      jointBlock.classList.remove('hidden');
+      jsTemp.textContent = simTemp.toFixed(0)+'°C';
+      jsPos.textContent = zoneFromT(jointT);
+    } else {
+      faultActive=false; btnFault.classList.remove('firing'); btnFault.textContent='⚠ Simulate Fault';
+    }
+  }
+
+  // =======================================================================
+  // ANIMATION LOOP
+  // =======================================================================
+  let running=true;
+  document.getElementById('btn-pause').addEventListener('click', function(){
+    running=!running; this.textContent = running? '⏸ Pause':'▶ Play';
+  });
+  const clock = new THREE.Clock();
+  const JOINT_SPEED=0.05, ORE_SPEED=0.06;
+  let jointT=0.03;
+  let dashAccum=0;
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const dt = Math.min(clock.getDelta(), 0.05);
+
+    if(running){
+      tailPulley.userData.spinMesh.rotation.y += dt*2.2;
+      headPulley.userData.spinMesh.rotation.y += dt*2.2;
+      idlers.forEach(st=>{ st.userData.spinTargets.forEach(m=>{ m.rotation.y += dt*2.6; }); });
+      returnRollers.forEach(r=>{ r.userData.spinMesh.rotation.y += dt*2.0; });
+      motorGroup.userData.spinMesh.rotation.z += dt*7.2;
+
+      rubberTex.offset.x -= dt*1.05;
+
+      // joint travel + diagnostic overlay pulse
+      jointT += JOINT_SPEED*dt;
+      if(jointT>0.97) jointT=0.03;
+      jointGroup.position.x = jointT*L;
+      const baseGlow = 0.14 + Math.sin(clock.elapsedTime*2.5)*0.05;
+      jointGroup.userData.overlay.material.opacity = faultActive ? 0.55+Math.sin(clock.elapsedTime*8)*0.2 : baseGlow;
+      jointGroup.userData.overlay.material.color.set(faultActive? 0xd94b3f : 0xf0a830);
+      jointGroup.userData.overlay.material.emissive.set(faultActive? 0xd94b3f : 0xf0a830);
+
+      // camera vision: beam + AI bounding box + label react to the joint fault sequence
+      const camBeamMat = camBeamMesh.material;
+      camBeamMat.color.set(faultActive ? 0xff3b3b : 0x3b82f6);
+      camBeamMat.opacity += ((faultActive?0.42:0.13)-camBeamMat.opacity)*Math.min(1,dt*3);
+      const detTarget = faultActive ? 0.85 : 0;
+      detectionBox.material.opacity += (detTarget-detectionBox.material.opacity)*Math.min(1,dt*4);
+      faultLabel.material.opacity += (detTarget-faultLabel.material.opacity)*Math.min(1,dt*4);
+      detectionBox.scale.setScalar(1 + Math.sin(clock.elapsedTime*6)*0.02*(faultActive?1:0));
+
+      // hall sensor + magnet field lines — steady when normal, alarm on break
+      const hallLed = hallMarker.userData.led.material;
+      if(beltBroken){
+        hallLed.emissiveIntensity = 1.2 + Math.sin(clock.elapsedTime*14)*0.9;
+        hallLed.color.set(0xff3b3b); hallLed.emissive.set(0xff3b3b);
+      } else {
+        hallLed.emissiveIntensity += (0.7-hallLed.emissiveIntensity)*Math.min(1,dt*3);
+        hallLed.color.set(0xa855f7); hallLed.emissive.set(0xa855f7);
+      }
+      const magnetHovered = (hovered===magnetGroup);
+      const fieldTargetOpacity = beltBroken ? 0.85 : (magnetHovered ? 0.7 : 0);
+      const fieldColor = beltBroken ? 0xff6b6b : 0xc4b5fd;
+      fieldLineMeshes.forEach(fl=>{
+        fl.material.opacity += (fieldTargetOpacity-fl.material.opacity)*Math.min(1,dt*5);
+        fl.material.color.set(fieldColor);
+      });
+
+      cordGroup.userData.beacon.material.emissiveIntensity = 0.5 + Math.sin(clock.elapsedTime*2.2)*0.35;
+
+      ores.forEach(o=>{
+        o.t += ORE_SPEED*o.speedMul*dt;
+        if(o.t>1){ o.t-=1; o.lane=(Math.random()-0.5)*(W-0.65); }
+        placeOre(o);
+        o.mesh.rotation.x += o.rx*dt; o.mesh.rotation.y += o.ry*dt; o.mesh.rotation.z += o.rz*dt;
+      });
+
+      const dp = dustGeo.attributes.position;
+      for(let i=0;i<DUST_COUNT;i++){
+        const s = dustSeeds[i];
+        let y = dp.getY(i) + s.riseSpeed*dt;
+        let x = dp.getX(i) + s.driftX*dt;
+        if(y > s.baseY+1.4){ y = s.baseY; }
+        dp.setY(i,y); dp.setX(i,x);
+      }
+      dp.needsUpdate = true;
+
+      updateFault(dt);
+
+      // ore stockpile: grow, then gradually get hauled away, repeat
+      const pileCycle = (clock.elapsedTime % PILE_CYCLE)/PILE_CYCLE;
+      const pileLevel = pileCycle<0.65 ? pileCycle/0.65 : 1-(pileCycle-0.65)/0.35;
+      const pileRadius = 0.25 + pileLevel*0.95;
+      const pileHeight = 0.3 + pileLevel*1.5;
+      oreMountain.scale.set(pileRadius, pileHeight, pileRadius);
+    }
+
+    if(!dragging){ /* no auto-rotate: keeps engineering-presentation framing stable */ }
+    updateCameraTransform(dt);
+    renderer.render(scene, camera);
+
+    dashAccum += dt;
+    if(dashAccum>0.15){
+      dashAccum=0;
+      const speed = running ? (1.05+Math.sin(clock.elapsedTime*0.6)*0.05) : 0;
+      spSpeed.textContent = speed.toFixed(2)+' m/s';
+      spTemp.textContent = simTemp.toFixed(0)+'°C';
+      if(beltBroken){ breakCamRenderer.render(scene, breakCam); }
+    }
+  }
+
+  window.addEventListener('resize', ()=>{
+    camera.aspect = window.innerWidth/window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+
+  document.getElementById('loading').style.display='none';
+  animate();
+
+})();
+</script>
+</body>
+</html>

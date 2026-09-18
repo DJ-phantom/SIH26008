@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   ArrowRight,
   Clock,
+  Box,
 } from "lucide-react";
 import { StatusStrip } from "@/components/StatusStrip";
 import {
@@ -412,6 +413,68 @@ export default function DigitalBeltPage() {
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      {/* 1.5 INTERACTIVE 3D ENGINEERING MODEL CTA */}
+      <section
+        className="card-panel"
+        style={{
+          marginBottom: "24px",
+          background: "linear-gradient(135deg, #0f172a 0%, #1e293b 100%)",
+          color: "#ffffff",
+          border: "1px solid #334155",
+          padding: "20px 24px",
+        }}
+      >
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "16px" }}>
+          <div style={{ flex: "1 1 320px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "6px" }}>
+              <Box size={22} style={{ color: "#38bdf8" }} />
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: 700, letterSpacing: "0.5px", color: "#ffffff" }}>
+                INTERACTIVE 3D ENGINEERING MODEL
+              </h3>
+              <span
+                style={{
+                  fontSize: "0.7rem",
+                  fontWeight: 700,
+                  padding: "2px 8px",
+                  borderRadius: "4px",
+                  backgroundColor: "rgba(56, 189, 248, 0.15)",
+                  color: "#38bdf8",
+                  border: "1px solid rgba(56, 189, 248, 0.3)",
+                }}
+              >
+                3D View
+              </span>
+            </div>
+            <p style={{ margin: 0, fontSize: "0.875rem", color: "#94a3b8", lineHeight: 1.5 }}>
+              Explore the conveyor structure, monitoring locations and planned sensor network through an interactive engineering visualization.
+            </p>
+          </div>
+
+          <Link
+            href="/digital-belt/3d"
+            style={{
+              backgroundColor: "#2563eb",
+              color: "#ffffff",
+              border: "none",
+              padding: "10px 18px",
+              borderRadius: "6px",
+              fontSize: "0.875rem",
+              fontWeight: 700,
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              textDecoration: "none",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.2)",
+              transition: "all 0.2s ease",
+            }}
+          >
+            <Box size={16} />
+            <span>Open Interactive 3D Model</span>
+            <ArrowRight size={16} />
+          </Link>
         </div>
       </section>
 

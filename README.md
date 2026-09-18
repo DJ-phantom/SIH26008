@@ -139,3 +139,12 @@ Both simulator and physical ESP32 publish identical JSON payloads every 1 second
 - `GET /api/condition/summary` — Multi-sensor condition summary
 - `GET /api/anomaly/status` — Isolation Forest anomaly assessment
 - `GET /api/decision-support/summary` — Step 13 Unified Decision Support diagnostic summary
+
+---
+
+## Interactive 3D Engineering Visualization
+
+- **Route**: Available under `/digital-belt/3d` (accessible via CTA on `/digital-belt`).
+- **Description**: Standalone Three.js 3D engineering visualization representing conveyor mechanical structure, splice monitoring points, troughing idlers, motor drive assembly, and multi-sensor layout concepts.
+- **Backend Independence**: The 3D viewer runs as a isolated WebGL client-side asset. Internal 3D fault simulation controls (`Simulate Fault`, `Break Belt`, `Repair`) are local animation controls and **do not modify live FastAPI backend telemetry, MQTT data, or PostgreSQL alert records**.
+
