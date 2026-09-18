@@ -285,7 +285,7 @@ def get_active_alerts(device_id: Optional[str] = None) -> List[Dict[str, Any]]:
     WHERE is_active = TRUE
     """
     params: Dict[str, Any] = {}
-    if device_id:
+    if device_id and isinstance(device_id, str):
         query += " AND device_id = %(device_id)s"
         params["device_id"] = device_id
     query += " ORDER BY started_at DESC;"
@@ -293,7 +293,10 @@ def get_active_alerts(device_id: Optional[str] = None) -> List[Dict[str, Any]]:
     try:
         with psycopg.connect(**get_connection_params()) as conn:
             with conn.cursor() as cur:
-                cur.execute(query, params)
+                if params:
+                    cur.execute(query, params)
+                else:
+                    cur.execute(query)
                 columns = [desc[0] for desc in cur.description]
                 rows = cur.fetchall()
                 return [dict(zip(columns, row)) for row in rows]

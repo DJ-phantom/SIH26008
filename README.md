@@ -1,37 +1,54 @@
-# SIH26008: Intelligent Conveyor Belt Health Monitoring System
+# SRIJAN • SIH26008: Intelligent Conveyor Belt Health Monitoring System
 
 ## Overview
-SIH26008 is an intelligent conveyor belt health and splice health monitoring system designed for real-time telemetry processing, PostgreSQL persistence, deterministic condition evaluation, multi-sensor condition assessment, predictive maintenance, anomaly detection, unified decision support, and real hardware demonstration readiness.
+SIH26008 is an intelligent conveyor belt health and splice health monitoring system designed for real-time telemetry processing, PostgreSQL persistence, deterministic condition evaluation, multi-sensor condition assessment, predictive maintenance, anomaly detection, unified decision support, real hardware demonstration readiness, and live private demo control.
 
 ## Current Development Stage
-- **Stage**: Step 14 — Hardware Demonstration Readiness & System Connectivity
-- **Status**: Completed hardware demonstration readiness layer. System is prepared for real ESP32 microcontrollers, local LCD edge displays, and camera inspection pipelines. System status (`/system`) features clean separation into **SOFTWARE SERVICES** and **HARDWARE / EDGE** sections with device status reporting (`data_source`, `device_id`, telemetry stream state, MQTT link, DB link). Features a realistic Local LCD Edge Display preview (`/local-display`), updated optical camera inspection page (`/camera`) with architectural flowcharts, and compact hardware summary on Overview.
+- **Stage**: Step 16 — Live Private Demo Control & Live Scenario Switching
+- **Status**: Complete live private demo control architecture (`tools/demo_controller.py`). Allows developers/presenters to trigger live scenario transitions (`NORMAL`, `HIGH_VIBRATION`, `MOTOR_OVERLOAD`, `BELT_MISALIGNMENT`, `SPLICE_DEGRADATION`) over MQTT topic `sih26008/control/scenario` without restarting the telemetry publisher or adding public buttons to the judge dashboard.
 
 ---
 
 ## Architecture Flow
 ```text
-Data Source Layer (Simulator OR Real Physical ESP32)
-        ↓  [Topic: sih26008/conveyor/ESP32-01/telemetry]
+Private Demo Controller (tools/demo_controller.py)
+        ↓  [Topic: sih26008/control/scenario]
 Mosquitto MQTT Broker (Port 1883)
         ↓
+Running Telemetry Publisher (mqtt_publisher.py) -> Live Smooth Scenario Transition
+        ↓  [Topic: sih26008/conveyor/ESP32-01/telemetry]
 FastAPI Backend (Port 8000)
         ↓
 PostgreSQL Telemetry Ingestion (Port 5433: telemetry table)
         ├── Rule-Based Condition & Alert Engine (backend/alert_engine.py)
-        │       ↓ PostgreSQL Alert Persistence (alerts table) -> REST Alert APIs -> Next.js /alerts
-        │
         ├── Multi-Sensor Condition Assessment Engine (backend/condition_engine.py)
-        │       ↓ 20-sample rolling numerical window -> Piecewise Linear Risk & Weighted Fusion
-        │
         ├── Isolation Forest Anomaly Engine (backend/anomaly_engine.py)
-        │       ↓ Exact 6-Feature Numerical Vector -> Isolation Forest Inference & Calibration
-        │
         └── Step 13 Decision Support Engine (backend/decision_support.py)
-                ↓ Level (NORMAL/ATTENTION/WARNING/CRITICAL) + Evidence Agreement + Action Mapping
                 ↓
-    REST API + Next.js Dashboard + Local LCD Preview + Camera Inspection Framework
+    REST API + SRIJAN Next.js Dashboard + Local LCD Preview
 ```
+
+---
+
+## SIH Demo Control & Live Scenario Switching
+
+To switch demonstration scenarios live without restarting the telemetry publisher:
+
+### 1. Launch Interactive Demo Controller
+```powershell
+.\venv\Scripts\python tools/demo_controller.py
+```
+Press `1` to `5` to select scenarios, `R` to reset to `NORMAL`, or `Q` to quit.
+
+### 2. Direct Command Mode (CLI Scripting)
+```powershell
+.\venv\Scripts\python tools/demo_controller.py HIGH_VIBRATION
+.\venv\Scripts\python tools/demo_controller.py MOTOR_OVERLOAD
+.\venv\Scripts\python tools/demo_controller.py BELT_MISALIGNMENT
+.\venv\Scripts\python tools/demo_controller.py SPLICE_DEGRADATION
+.\venv\Scripts\python tools/demo_controller.py NORMAL
+```
+> See [`docs/demo-cheatsheet.md`](file:///c:/SIH26008/docs/demo-cheatsheet.md) for the complete presentation guide.
 
 ---
 

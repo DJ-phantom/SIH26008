@@ -42,7 +42,7 @@ export default function CameraInspectionPage() {
             <div className="system-card-body">
               <div className="system-meta-row">
                 <span className="system-meta-label">Physical Hardware</span>
-                <span className="system-meta-val" style={{ color: "#dc2626", fontWeight: 700 }}>Not Connected</span>
+                <span className="system-meta-val" style={{ color: "#64748b", fontWeight: 600 }}>Not Connected</span>
               </div>
               <div className="system-meta-row">
                 <span className="system-meta-label">Inspection Stream</span>
@@ -63,7 +63,7 @@ export default function CameraInspectionPage() {
             <div className="system-card-body">
               <div className="system-meta-row">
                 <span className="system-meta-label">CV Engine Status</span>
-                <span className="system-meta-val" style={{ color: "#dc2626", fontWeight: 700 }}>Not Enabled</span>
+                <span className="system-meta-val" style={{ color: "#64748b", fontWeight: 600 }}>Not Enabled</span>
               </div>
               <div className="system-meta-row">
                 <span className="system-meta-label">Defect Classification</span>

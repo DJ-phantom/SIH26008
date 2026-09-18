@@ -61,7 +61,7 @@ export const TelemetryCards: React.FC<TelemetryCardsProps> = ({
       name: "Temperature",
       value: telemetry.temperature.toFixed(1),
       unit: "°C",
-      demoRange: "Normal baseline: 38.0 – 44.0 °C",
+      demoRange: "Demo simulation range: 38.0 – 44.0 °C",
       icon: Thermometer,
     },
     {
@@ -69,7 +69,7 @@ export const TelemetryCards: React.FC<TelemetryCardsProps> = ({
       name: "Vibration",
       value: telemetry.vibration.toFixed(2),
       unit: "g",
-      demoRange: "Normal baseline: 0.20 – 0.35 g",
+      demoRange: "Demo simulation range: 0.20 – 0.35 g",
       icon: Activity,
     },
     {
@@ -77,7 +77,7 @@ export const TelemetryCards: React.FC<TelemetryCardsProps> = ({
       name: "Motor Current",
       value: telemetry.current.toFixed(2),
       unit: "A",
-      demoRange: "Normal baseline: 3.80 – 4.50 A",
+      demoRange: "Demo simulation range: 3.80 – 4.50 A",
       icon: Zap,
     },
     {
@@ -85,7 +85,7 @@ export const TelemetryCards: React.FC<TelemetryCardsProps> = ({
       name: "Belt Speed",
       value: telemetry.speed.toFixed(2),
       unit: "m/s",
-      demoRange: "Normal baseline: 1.70 – 1.90 m/s",
+      demoRange: "Demo simulation range: 1.70 – 1.90 m/s",
       icon: Gauge,
     },
     {
@@ -93,7 +93,7 @@ export const TelemetryCards: React.FC<TelemetryCardsProps> = ({
       name: "Alignment",
       value: telemetry.alignment >= 0 ? `+${telemetry.alignment.toFixed(1)}` : telemetry.alignment.toFixed(1),
       unit: "mm",
-      demoRange: "Normal baseline: -2.0 – +2.0 mm",
+      demoRange: "Demo simulation range: -2.0 – +2.0 mm",
       icon: MoveHorizontal,
     },
     {
@@ -101,7 +101,7 @@ export const TelemetryCards: React.FC<TelemetryCardsProps> = ({
       name: "Load",
       value: telemetry.load.toFixed(1),
       unit: "%",
-      demoRange: "Normal baseline: 50.0 – 70.0 %",
+      demoRange: "Demo simulation range: 50.0 – 70.0 %",
       icon: Weight,
     },
   ];

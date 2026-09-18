@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import sys
+import threading
 import time
 
 # Ensure project root is in sys.path
@@ -20,13 +21,18 @@ BROKER_HOST = "localhost"
 BROKER_PORT = 1883
 DEVICE_ID = "ESP32-01"
 MQTT_TOPIC = f"sih26008/conveyor/{DEVICE_ID}/telemetry"
+CONTROL_TOPIC = "sih26008/control/scenario"
 PUBLISH_INTERVAL = 1.0  # seconds
 
 VALID_SCENARIOS = [s.value for s in Scenario]
 
 
 class ConveyorMQTTPublisher:
-    """Publishes synthetic conveyor sensor telemetry over MQTT to a Mosquitto broker."""
+    """Publishes synthetic conveyor sensor telemetry over MQTT to a Mosquitto broker.
+    
+    Subscribes to a local MQTT demo control topic to allow live scenario switching
+    without restarting the telemetry publisher process.
+    """
 
     def __init__(
         self,
@@ -34,12 +40,15 @@ class ConveyorMQTTPublisher:
         broker_port: int = BROKER_PORT,
         device_id: str = DEVICE_ID,
         topic: str = MQTT_TOPIC,
+        control_topic: str = CONTROL_TOPIC,
         scenario: str = Scenario.NORMAL.value,
     ):
         self.broker_host = broker_host
         self.broker_port = broker_port
         self.device_id = device_id
         self.topic = topic
+        self.control_topic = control_topic
+        self.lock = threading.Lock()
 
         try:
             scenario_enum = Scenario(scenario.upper())
@@ -69,7 +78,10 @@ class ConveyorMQTTPublisher:
                 self.connected = True
                 print(f"[MQTT] Connected successfully to broker at {self.broker_host}:{self.broker_port}")
                 print(f"[MQTT] Active Scenario: [{self.simulator.scenario.value}]")
-                print(f"[MQTT] Publishing to topic: {self.topic}\n")
+                print(f"[MQTT] Publishing to topic: {self.topic}")
+                print(f"[MQTT] Subscribed to control topic: {self.control_topic}\n")
+                # Subscribe to control topic for live scenario switching
+                client.subscribe(self.control_topic)
             else:
                 print(f"[MQTT] Connection failed with code {rc}")
 
@@ -77,8 +89,32 @@ class ConveyorMQTTPublisher:
             self.connected = False
             print("[MQTT] Disconnected from broker.")
 
+        def on_message(client, userdata, msg):
+            if msg.topic == self.control_topic:
+                try:
+                    command = msg.payload.decode("utf-8").strip().upper()
+                except Exception as e:
+                    print(f"[Demo Control] Failed to decode control payload: {e}")
+                    return
+
+                if command in VALID_SCENARIOS:
+                    with self.lock:
+                        old_scenario = self.simulator.scenario.value
+                        new_scenario = Scenario(command)
+                        if old_scenario != command:
+                            self.simulator.set_scenario(new_scenario)
+                            print(f"\n[Demo Control] Scenario change requested: {old_scenario} -> {command}\n")
+                        else:
+                            print(f"\n[Demo Control] Already running scenario: {command}\n")
+                else:
+                    print(
+                        f"\n[Demo Control] Invalid scenario command: '{command}'\n"
+                        f"Valid scenarios: {', '.join(VALID_SCENARIOS)}\n"
+                    )
+
         self.client.on_connect = on_connect
         self.client.on_disconnect = on_disconnect
+        self.client.on_message = on_message
 
     def start(self):
         """Connects to the broker and continuously publishes telemetry."""
@@ -105,7 +141,8 @@ class ConveyorMQTTPublisher:
 
         try:
             while True:
-                telemetry = self.simulator.generate_telemetry()
+                with self.lock:
+                    telemetry = self.simulator.generate_telemetry()
                 payload = json.dumps(telemetry, separators=(",", ":"))
                 self.client.publish(self.topic, payload=payload, qos=0)
                 print(f"Published -> {self.topic} | {payload}")
@@ -167,4 +204,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
