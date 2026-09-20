@@ -200,6 +200,26 @@ export default function SystemStatusPage() {
             </div>
           </div>
 
+          {/* Cloud Demo Generator (when Cloud Demo Mode) */}
+          {isCloudDemo && (
+            <div className="system-card">
+              <div className="system-card-header">
+                <span className="system-card-title">Cloud Demo Generator</span>
+                <Clock size={18} className="strip-icon" />
+              </div>
+              <div className="system-card-body">
+                <div className="system-meta-row">
+                  <span className="system-meta-label">Pipeline Mode</span>
+                  <span className="system-meta-val">FastAPI Background Generator</span>
+                </div>
+                <div className="system-meta-row">
+                  <span className="system-meta-label">Generator State</span>
+                  <span className="strip-badge online">ACTIVE (1 Hz)</span>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Condition Assessment Engine */}
           <div className="system-card">
             <div className="system-card-header">

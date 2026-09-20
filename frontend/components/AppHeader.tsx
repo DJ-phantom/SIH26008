@@ -95,7 +95,7 @@ export const AppHeader: React.FC = () => {
         {/* 3. TARGET DEVICE BADGE */}
         <div className="device-pill">
           <Cpu size={14} className="device-icon" />
-          <span>Target: <strong>{deviceId}</strong></span>
+          <span>{isCloudDemo ? "Virtual Node:" : "Target:"} <strong>{deviceId}</strong></span>
         </div>
 
         {/* 4. SOFTWARE STACK CONNECTIVITY BADGE */}
