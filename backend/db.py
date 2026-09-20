@@ -12,6 +12,7 @@ load_dotenv()
 
 logger = logging.getLogger("backend.db")
 
+DATABASE_URL = os.getenv("DATABASE_URL")
 PGHOST = os.getenv("PGHOST", "127.0.0.1")
 PGPORT = int(os.getenv("PGPORT", "5433"))
 PGDATABASE = os.getenv("PGDATABASE", "sih26008")
@@ -29,6 +30,14 @@ def get_connection_params() -> dict:
         "password": PGPASSWORD,
         "connect_timeout": 3,
     }
+
+
+def connect_db(autocommit: bool = False):
+    """Returns a psycopg connection using DATABASE_URL if provided, otherwise using explicit connection parameters."""
+    db_url = os.getenv("DATABASE_URL")
+    if db_url and db_url.strip():
+        return psycopg.connect(db_url.strip(), connect_timeout=3, autocommit=autocommit)
+    return psycopg.connect(**get_connection_params(), autocommit=autocommit)
 
 
 def init_db():
@@ -72,10 +81,11 @@ def init_db():
     CREATE INDEX IF NOT EXISTS idx_alerts_started_at ON alerts (started_at DESC);
     """
     try:
-        with psycopg.connect(**get_connection_params(), autocommit=True) as conn:
+        with connect_db(autocommit=True) as conn:
             with conn.cursor() as cur:
                 cur.execute(create_table_query)
-        print(f"[Backend DB] Database [{PGDATABASE}] schema verified (telemetry & alerts) on {PGHOST}:{PGPORT}.")
+        db_target = "DATABASE_URL" if os.getenv("DATABASE_URL") else f"{PGHOST}:{PGPORT}/{PGDATABASE}"
+        print(f"[Backend DB] Database [{db_target}] schema verified (telemetry & alerts).")
     except Exception as e:
         print(f"[Backend DB] Warning: Failed to initialize database: {e}")
         raise e
@@ -84,7 +94,7 @@ def init_db():
 def check_db_connection() -> bool:
     """Checks whether the PostgreSQL database is reachable."""
     try:
-        with psycopg.connect(**get_connection_params()) as conn:
+        with connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT 1;")
                 return True
@@ -105,7 +115,7 @@ def insert_telemetry(data: TelemetryData) -> Optional[int]:
     ) RETURNING id;
     """
     try:
-        with psycopg.connect(**get_connection_params(), autocommit=True) as conn:
+        with connect_db(autocommit=True) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     insert_query,
@@ -148,7 +158,7 @@ def get_telemetry_history(limit: int = 20) -> List[Dict[str, Any]]:
     LIMIT %(limit)s;
     """
     try:
-        with psycopg.connect(**get_connection_params()) as conn:
+        with connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(select_query, {"limit": limit})
                 columns = [desc[0] for desc in cur.description]
@@ -162,7 +172,7 @@ def get_telemetry_history(limit: int = 20) -> List[Dict[str, Any]]:
 def get_telemetry_count() -> int:
     """Returns the total number of telemetry records stored in PostgreSQL."""
     try:
-        with psycopg.connect(**get_connection_params()) as conn:
+        with connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute("SELECT COUNT(*) FROM telemetry;")
                 row = cur.fetchone()
@@ -192,7 +202,7 @@ def create_alert(
     ) RETURNING id;
     """
     try:
-        with psycopg.connect(**get_connection_params(), autocommit=True) as conn:
+        with connect_db(autocommit=True) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     insert_query,
@@ -229,7 +239,7 @@ def update_alert(
     WHERE id = %(alert_id)s AND is_active = TRUE;
     """
     try:
-        with psycopg.connect(**get_connection_params(), autocommit=True) as conn:
+        with connect_db(autocommit=True) as conn:
             with conn.cursor() as cur:
                 cur.execute(
                     update_query,
@@ -256,7 +266,7 @@ def resolve_alert(alert_id: int) -> bool:
     WHERE id = %(alert_id)s AND is_active = TRUE;
     """
     try:
-        with psycopg.connect(**get_connection_params(), autocommit=True) as conn:
+        with connect_db(autocommit=True) as conn:
             with conn.cursor() as cur:
                 cur.execute(resolve_query, {"alert_id": alert_id})
                 return cur.rowcount > 0
@@ -291,7 +301,7 @@ def get_active_alerts(device_id: Optional[str] = None) -> List[Dict[str, Any]]:
     query += " ORDER BY started_at DESC;"
 
     try:
-        with psycopg.connect(**get_connection_params()) as conn:
+        with connect_db() as conn:
             with conn.cursor() as cur:
                 if params:
                     cur.execute(query, params)
@@ -326,7 +336,7 @@ def get_alert_history(limit: int = 50) -> List[Dict[str, Any]]:
     LIMIT %(limit)s;
     """
     try:
-        with psycopg.connect(**get_connection_params()) as conn:
+        with connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(query, {"limit": limit})
                 columns = [desc[0] for desc in cur.description]
@@ -346,7 +356,7 @@ def get_alert_count() -> Dict[str, int]:
     FROM alerts;
     """
     try:
-        with psycopg.connect(**get_connection_params()) as conn:
+        with connect_db() as conn:
             with conn.cursor() as cur:
                 cur.execute(query)
                 row = cur.fetchone()
@@ -356,4 +366,5 @@ def get_alert_count() -> Dict[str, int]:
     except Exception as e:
         print(f"[Backend DB] Error fetching alert counts: {e}")
         return {"active": 0, "total": 0}
+
 

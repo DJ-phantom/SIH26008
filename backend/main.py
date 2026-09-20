@@ -6,8 +6,16 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from backend.alert_engine import alert_engine
 from backend.anomaly_engine import anomaly_engine
+from backend.cloud_demo import cloud_demo_generator
 from backend.condition_engine import condition_engine
-from backend.decision_support import decision_support_engine
+from backend.config import (
+    CLOUD_DEMO,
+    DATA_SOURCE,
+    DEVICE_ID,
+    FRONTEND_ORIGINS,
+    TELEMETRY_TOPIC,
+    get_data_source_mode,
+)
 from backend.db import (
     check_db_connection,
     get_active_alerts,
@@ -17,6 +25,8 @@ from backend.db import (
     get_telemetry_history,
     init_db,
 )
+
+from backend.decision_support import decision_support_engine
 from backend.models import (
     AlertCount,
     AlertRecord,
@@ -27,6 +37,7 @@ from backend.models import (
     TelemetryRecord,
 )
 from backend.mqtt_client import mqtt_subscriber
+from backend.telemetry_processor import get_latest_telemetry as fetch_latest_in_memory_telemetry
 
 
 @asynccontextmanager
@@ -43,37 +54,37 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         print(f"[Backend Lifespan] Anomaly model startup warning: {e}")
 
-    mqtt_subscriber.start()
+    if CLOUD_DEMO:
+        print("[Backend Lifespan] Mode: PUBLIC CLOUD DEMO MODE. Starting Cloud Telemetry Generator...")
+        cloud_demo_generator.start()
+    else:
+        print("[Backend Lifespan] Mode: LOCAL HARDWARE / MQTT MODE. Starting Backend MQTT Subscriber...")
+        mqtt_subscriber.start()
+
     yield
-    # Shutdown: Stop and disconnect the MQTT client cleanly
-    mqtt_subscriber.stop()
+
+    # Shutdown: Stop generators or MQTT subscribers cleanly
+    if CLOUD_DEMO:
+        await cloud_demo_generator.stop()
+    else:
+        mqtt_subscriber.stop()
 
 
 app = FastAPI(
     title="SIH26008 Conveyor Health Backend",
     description="Real-time intelligent conveyor belt health monitoring API with PostgreSQL persistence & Multi-Sensor Condition Engine",
-    version="0.4.0",
+    version="0.5.0",
     lifespan=lifespan,
 )
 
-# CORS configuration for local development
+# CORS configuration for development and cloud deployments
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:8000",
-        "http://127.0.0.1:8000",
-    ],
+    allow_origins=FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-
-from backend.config import DATA_SOURCE, DEVICE_ID, TELEMETRY_TOPIC, get_data_source_mode
 
 
 @app.get("/", tags=["General"])
@@ -82,6 +93,7 @@ async def root():
     return {
         "service": "SRIJAN SIH26008 Conveyor Health Backend",
         "status": "running",
+        "cloud_demo": CLOUD_DEMO,
     }
 
 
@@ -90,12 +102,23 @@ async def health_check():
     """Health check endpoint reporting service, MQTT, PostgreSQL connection status, and data source disclosure."""
     db_ok = check_db_connection()
     mqtt_ok = mqtt_subscriber.is_connected()
-    overall_status = "ok" if (db_ok and mqtt_ok) else "degraded"
+
+    if CLOUD_DEMO:
+        mqtt_required = False
+        overall_status = "ok" if db_ok else "degraded"
+        effective_data_source = "CLOUD_DEMO" if DATA_SOURCE != "ESP32" else DATA_SOURCE
+    else:
+        mqtt_required = True
+        overall_status = "ok" if (db_ok and mqtt_ok) else "degraded"
+        effective_data_source = DATA_SOURCE
+
     return {
         "status": overall_status,
         "mqtt_connected": mqtt_ok,
+        "mqtt_required": mqtt_required,
         "database_connected": db_ok,
-        "data_source": DATA_SOURCE,
+        "cloud_demo": CLOUD_DEMO,
+        "data_source": effective_data_source,
         "data_source_mode": get_data_source_mode(),
         "device_id": DEVICE_ID,
         "telemetry_topic": TELEMETRY_TOPIC,
@@ -113,13 +136,14 @@ async def health_check():
 )
 async def get_latest_telemetry():
     """Returns the most recent validated telemetry reading from the in-memory cache."""
-    telemetry = mqtt_subscriber.get_latest_telemetry()
+    telemetry = fetch_latest_in_memory_telemetry()
     if telemetry is None:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="No telemetry received yet from conveyor sensors. Please ensure the publisher is active.",
+            detail="No telemetry received yet from conveyor sensors. Please ensure the publisher or cloud generator is active.",
         )
     return telemetry
+
 
 
 @app.get(

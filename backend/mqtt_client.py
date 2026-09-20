@@ -7,11 +7,8 @@ from typing import Optional
 import paho.mqtt.client as mqtt
 from pydantic import ValidationError
 
-from backend.alert_engine import alert_engine
-from backend.anomaly_engine import anomaly_engine
-from backend.condition_engine import condition_engine
-from backend.db import insert_telemetry
 from backend.models import TelemetryData
+from backend.telemetry_processor import get_latest_telemetry as get_shared_latest_telemetry, process_telemetry
 
 logger = logging.getLogger("backend.mqtt")
 
@@ -21,7 +18,7 @@ TELEMETRY_TOPIC = "sih26008/conveyor/ESP32-01/telemetry"
 
 
 class BackendMQTTSubscriber:
-    """Subscribes to conveyor telemetry over MQTT, caches latest in memory, persists to PostgreSQL, and triggers engines."""
+    """Subscribes to conveyor telemetry over MQTT, caches latest in memory, persists to PostgreSQL, and triggers engines via process_telemetry."""
 
     def __init__(
         self,
@@ -32,9 +29,6 @@ class BackendMQTTSubscriber:
         self.broker_host = broker_host
         self.broker_port = broker_port
         self.topic = topic
-
-        self._latest_telemetry: Optional[TelemetryData] = None
-        self._lock = threading.Lock()
         self._connected = False
 
         # Configure MQTT Client with unique process ID to prevent broker session collision
@@ -71,38 +65,8 @@ class BackendMQTTSubscriber:
                 raw_data = json.loads(payload_str)
                 validated_data = TelemetryData.model_validate(raw_data)
 
-                # 1. Update in-memory cache
-                with self._lock:
-                    self._latest_telemetry = validated_data
-
-                # 2. Persist to PostgreSQL (non-fatal on failure)
-                row_id = insert_telemetry(validated_data)
-                db_status = f"DB ID: {row_id}" if row_id else "DB: pending/skipped"
-
-                # 3. Rule-Based Condition & Alert Engine Evaluation (non-fatal on failure)
-                try:
-                    alert_engine.process_telemetry(validated_data)
-                except Exception as alert_err:
-                    print(f"[Backend MQTT] Alert engine evaluation error: {alert_err}")
-
-                # 4. Multi-Sensor Condition Assessment Engine Evaluation (non-fatal on failure)
-                try:
-                    condition_engine.process_telemetry(validated_data)
-                except Exception as cond_err:
-                    print(f"[Backend MQTT] Condition engine processing error: {cond_err}")
-
-                # 5. Step 12 Isolation Forest Anomaly Detection Engine Evaluation (non-fatal on failure)
-                try:
-                    anomaly_engine.process_telemetry(validated_data)
-                except Exception as anomaly_err:
-                    print(f"[Backend MQTT] Anomaly engine processing error: {anomaly_err}")
-
-                print(
-                    f"MQTT received | {validated_data.device_id} | "
-                    f"Temp: {validated_data.temperature:.1f} | "
-                    f"Vib: {validated_data.vibration:.2f} | "
-                    f"Speed: {validated_data.speed:.2f} | {db_status}"
-                )
+                # Delegate processing to shared telemetry processor pipeline
+                process_telemetry(validated_data)
             except UnicodeDecodeError as e:
                 print(f"[Backend MQTT] Error decoding message payload: {e}")
             except json.JSONDecodeError as e:
@@ -143,9 +107,9 @@ class BackendMQTTSubscriber:
         return self._connected
 
     def get_latest_telemetry(self) -> Optional[TelemetryData]:
-        with self._lock:
-            return self._latest_telemetry
+        return get_shared_latest_telemetry()
 
 
 # Global singleton instance for the FastAPI backend
 mqtt_subscriber = BackendMQTTSubscriber()
+

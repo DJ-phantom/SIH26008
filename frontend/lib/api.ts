@@ -1,7 +1,9 @@
 export interface HealthResponse {
   status: string;
   mqtt_connected: boolean;
+  mqtt_required?: boolean;
   database_connected: boolean;
+  cloud_demo?: boolean;
   data_source?: string;
   data_source_mode?: string;
   device_id?: string;

@@ -34,10 +34,18 @@ export default function SystemStatusPage() {
 
   const isBackendOnline = health && !backendError;
   const isMqttOnline = health?.mqtt_connected ?? false;
+  const isMqttRequired = health?.mqtt_required ?? true;
+  const isCloudDemo = health?.cloud_demo ?? (health?.data_source === "CLOUD_DEMO");
   const isDbOnline = health?.database_connected ?? false;
   const isAnomalyLoaded = anomalyStatus?.available ?? false;
   const deviceId = telemetry?.device_id || health?.device_id || "ESP32-01";
   const dataSource = health?.data_source || "SIMULATOR";
+
+  const getDataSourceLabel = () => {
+    if (isCloudDemo) return "Cloud Synthetic Telemetry";
+    if (dataSource === "ESP32") return "Physical ESP32";
+    return "Synthetic Simulator";
+  };
 
   return (
     <div>
@@ -69,15 +77,21 @@ export default function SystemStatusPage() {
           <div style={{ padding: "10px 12px", backgroundColor: "#f8fafc", borderRadius: "6px" }}>
             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Data Source</div>
             <strong style={{ fontSize: "0.95rem", color: "var(--accent-primary)" }}>
-              {dataSource === "SIMULATOR" ? "Synthetic Simulator" : "Physical ESP32"}
+              {getDataSourceLabel()}
             </strong>
           </div>
 
           <div style={{ padding: "10px 12px", backgroundColor: "#f8fafc", borderRadius: "6px" }}>
             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>MQTT Link</div>
-            <span className={`strip-badge ${isMqttOnline ? "online" : "offline"}`} style={{ display: "inline-block", marginTop: "4px" }}>
-              {isMqttOnline ? "CONNECTED" : "DISCONNECTED"}
-            </span>
+            {!isMqttRequired ? (
+              <span className="strip-badge" style={{ display: "inline-block", marginTop: "4px", backgroundColor: "#e2e8f0", color: "#475569" }}>
+                NOT REQUIRED
+              </span>
+            ) : (
+              <span className={`strip-badge ${isMqttOnline ? "online" : "offline"}`} style={{ display: "inline-block", marginTop: "4px" }}>
+                {isMqttOnline ? "CONNECTED" : "DISCONNECTED"}
+              </span>
+            )}
           </div>
 
           <div style={{ padding: "10px 12px", backgroundColor: "#f8fafc", borderRadius: "6px" }}>
@@ -153,9 +167,15 @@ export default function SystemStatusPage() {
               </div>
               <div className="system-meta-row">
                 <span className="system-meta-label">Broker Link</span>
-                <span className={`strip-badge ${isMqttOnline ? "online" : "offline"}`}>
-                  {isMqttOnline ? "CONNECTED" : "DISCONNECTED"}
-                </span>
+                {!isMqttRequired ? (
+                  <span className="strip-badge" style={{ backgroundColor: "#e2e8f0", color: "#475569" }}>
+                    Not Required in Cloud Demo Mode
+                  </span>
+                ) : (
+                  <span className={`strip-badge ${isMqttOnline ? "online" : "offline"}`}>
+                    {isMqttOnline ? "CONNECTED" : "DISCONNECTED"}
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -279,7 +299,7 @@ export default function SystemStatusPage() {
               <div className="system-meta-row">
                 <span className="system-meta-label">Source Mode</span>
                 <span className="system-meta-val" style={{ color: "var(--accent-primary)", fontWeight: 700 }}>
-                  {dataSource} (Synthetic Prototype)
+                  {getDataSourceLabel()}
                 </span>
               </div>
               <div className="system-meta-row">
@@ -302,7 +322,9 @@ export default function SystemStatusPage() {
               </div>
               <div className="system-meta-row">
                 <span className="system-meta-label">Ingestion Link</span>
-                <span className="system-meta-val">Simulator via MQTT</span>
+                <span className="system-meta-val">
+                  {isCloudDemo ? "Direct FastAPI Pipeline" : "Simulator via MQTT"}
+                </span>
               </div>
             </div>
           </div>
@@ -338,7 +360,7 @@ export default function SystemStatusPage() {
               </div>
               <div className="system-meta-row">
                 <span className="system-meta-label">Web Preview</span>
-                <span className="strip-badge online">Active</span>
+                <span className="strip-badge online">{isCloudDemo ? "Preview Only" : "Active"}</span>
               </div>
             </div>
           </div>
@@ -354,10 +376,12 @@ export default function SystemStatusPage() {
           <Info size={20} style={{ color: "var(--accent-primary)", flexShrink: 0, marginTop: "2px" }} />
           <div>
             <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--text-primary)" }}>
-              Data Provenance & Real Hardware Integration Protocol
+              Data Provenance & Deployment Operating Modes
             </div>
             <p style={{ fontSize: "0.825rem", color: "var(--text-secondary)", marginTop: "4px", lineHeight: "1.5" }}>
-              The software architecture is fully hardware-ready. To transition from SIMULATOR to REAL HARDWARE mode, stop the Python MQTT simulator script and power on an ESP32 publishing valid JSON telemetry to <code style={{ backgroundColor: "#e2e8f0", padding: "1px 4px", borderRadius: "3px" }}>sih26008/conveyor/ESP32-01/telemetry</code>. No backend REST API or frontend dashboard code changes are required.
+              {isCloudDemo
+                ? "The platform is currently operating in PUBLIC CLOUD DEMO MODE. FastAPI generates continuous synthetic baseline telemetry routed directly through all backend intelligence engines. For physical deployment, set CLOUD_DEMO=false and DATA_SOURCE=ESP32."
+                : "The software architecture is fully hardware-ready. To transition from SIMULATOR to REAL HARDWARE mode, stop the Python MQTT simulator script and power on an ESP32 publishing valid JSON telemetry to sih26008/conveyor/ESP32-01/telemetry. No backend REST API or frontend dashboard code changes are required."}
             </p>
           </div>
         </div>
@@ -365,3 +389,4 @@ export default function SystemStatusPage() {
     </div>
   );
 }
+
