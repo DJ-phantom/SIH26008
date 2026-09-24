@@ -427,22 +427,32 @@ from simulator.sensor_simulator import Scenario
     responses={
         200: {"description": "Demo telemetry scenario updated successfully"},
         400: {"description": "Invalid scenario name"},
+        403: {"description": "Scenario control disabled in non-demo mode"},
     },
 )
 async def set_demo_scenario(
     scenario: str = Query(..., description="Scenario name: NORMAL, HIGH_VIBRATION, MOTOR_OVERLOAD, BELT_MISALIGNMENT, SPLICE_DEGRADATION")
 ):
-    """Updates active synthetic telemetry scenario for CloudDemoGenerator."""
-    try:
-        scen_enum = Scenario(scenario.strip().upper())
-        cloud_demo_generator.set_scenario(scen_enum)
-        return {
-            "status": "updated",
-            "active_scenario": scen_enum.value,
-            "device_id": DEVICE_ID,
-        }
-    except ValueError:
+    """Updates active synthetic telemetry scenario for CloudDemoGenerator in CLOUD_DEMO mode."""
+    if not CLOUD_DEMO:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Demo scenario control is disabled when CLOUD_DEMO is False (Physical Hardware / MQTT Mode).",
+        )
+
+    scen_str = scenario.strip().upper()
+    valid_scenarios = [s.value for s in Scenario]
+    if scen_str not in valid_scenarios:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Invalid scenario '{scenario}'. Valid choices: NORMAL, HIGH_VIBRATION, MOTOR_OVERLOAD, BELT_MISALIGNMENT, SPLICE_DEGRADATION",
+            detail=f"Invalid scenario '{scenario}'. Allowed choices: {', '.join(valid_scenarios)}",
         )
+
+    scen_enum = Scenario(scen_str)
+    cloud_demo_generator.set_scenario(scen_enum)
+    return {
+        "status": "updated",
+        "active_scenario": scen_enum.value,
+        "device_id": DEVICE_ID,
+        "cloud_demo": True,
+    }

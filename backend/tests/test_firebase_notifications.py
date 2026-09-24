@@ -273,5 +273,25 @@ class TestFirebaseNotificationsAndAlerts(unittest.TestCase):
         mock_deactivate.assert_not_called()
         mock_record.assert_called_once()
 
+
+    @patch("backend.main.CLOUD_DEMO", False)
+    def test_demo_scenario_forbidden_in_non_cloud_mode(self):
+        res = self.client.post("/api/demo/scenario?scenario=BELT_MISALIGNMENT")
+        self.assertEqual(res.status_code, 403)
+        self.assertIn("disabled when CLOUD_DEMO is False", res.json()["detail"])
+
+    @patch("backend.main.CLOUD_DEMO", True)
+    def test_demo_scenario_invalid_name_400(self):
+        res = self.client.post("/api/demo/scenario?scenario=INVALID_HACK")
+        self.assertEqual(res.status_code, 400)
+        self.assertIn("Allowed choices", res.json()["detail"])
+
+    @patch("backend.main.CLOUD_DEMO", True)
+    @patch("backend.main.cloud_demo_generator.set_scenario")
+    def test_demo_scenario_success(self, mock_set):
+        res = self.client.post("/api/demo/scenario?scenario=BELT_MISALIGNMENT")
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.json()["active_scenario"], "BELT_MISALIGNMENT")
+
 if __name__ == "__main__":
     unittest.main()
