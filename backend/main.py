@@ -1,3 +1,15 @@
+from backend.firebase_notifications import init_firebase_admin, is_firebase_configured
+from backend.models import (
+    DeviceRegistrationRequest,
+    DeviceUnregisterRequest,
+    NotificationStatusResponse,
+)
+from backend.db import (
+    get_active_device_count,
+    get_alert_by_id,
+    register_push_device,
+    unregister_push_device,
+)
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
@@ -48,6 +60,11 @@ async def lifespan(app: FastAPI):
         alert_engine.sync_from_db()
     except Exception as e:
         print(f"[Backend Lifespan] Database startup warning: {e}")
+
+    try:
+        init_firebase_admin()
+    except Exception as e:
+        print(f"[Backend Lifespan] Firebase Admin startup warning: {e}")
 
     try:
         anomaly_engine.load_model()
@@ -304,3 +321,97 @@ async def get_decision_support_summary():
     return decision_support_engine.generate_summary()
 
 
+
+
+# --- Notification REST Endpoints ---
+
+@app.post(
+    "/api/notifications/register-device",
+    tags=["Notifications"],
+    responses={
+        200: {"description": "Device token registered successfully"},
+        400: {"description": "Invalid device token"},
+    },
+)
+async def register_device(req: DeviceRegistrationRequest):
+    """Registers or refreshes an FCM device token for push alert notifications."""
+    if not req.token or not req.token.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="FCM token cannot be empty.",
+        )
+    ok = register_push_device(
+        token=req.token.strip(),
+        platform=req.platform,
+        device_label=req.device_label,
+    )
+    if not ok:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to register FCM device token.",
+        )
+    return {
+        "status": "registered",
+        "device_label": req.device_label,
+        "platform": req.platform,
+        "is_active": True,
+    }
+
+
+@app.post(
+    "/api/notifications/unregister-device",
+    tags=["Notifications"],
+    responses={
+        200: {"description": "Device token unregistered successfully"},
+    },
+)
+async def unregister_device(req: DeviceUnregisterRequest):
+    """Marks an FCM device token as inactive."""
+    if not req.token or not req.token.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="FCM token cannot be empty.",
+        )
+    unregister_push_device(token=req.token.strip())
+    return {"status": "unregistered", "is_active": False}
+
+
+@app.get(
+    "/api/notifications/status",
+    response_model=NotificationStatusResponse,
+    tags=["Notifications"],
+    responses={
+        200: {"description": "Notification subsystem status retrieved successfully"},
+    },
+)
+async def get_notification_status():
+    """Returns safe diagnostic information regarding Firebase Admin configuration and active devices."""
+    configured = is_firebase_configured()
+    active_count = get_active_device_count()
+    return NotificationStatusResponse(
+        firebase_configured=configured,
+        active_device_count=active_count,
+        dispatch_mode="DEMO_BROADCAST",
+    )
+
+
+# --- Alert By ID REST Endpoint ---
+
+@app.get(
+    "/api/alerts/{alert_id}",
+    response_model=AlertRecord,
+    tags=["Alerts"],
+    responses={
+        200: {"description": "Exact alert event retrieved successfully"},
+        404: {"description": "Alert event not found"},
+    },
+)
+async def get_alert_by_id_endpoint(alert_id: int):
+    """Returns a specific alert event record by its unique database ID."""
+    record = get_alert_by_id(alert_id)
+    if not record:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Alert #{alert_id} not found.",
+        )
+    return record

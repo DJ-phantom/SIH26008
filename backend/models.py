@@ -141,3 +141,22 @@ class DecisionSummary(BaseModel):
 
 
 
+
+
+class DeviceRegistrationRequest(BaseModel):
+    """Request payload for registering or updating an FCM push device."""
+    token: str
+    platform: str = "android"
+    device_label: str = "SRIJAN Android Device"
+
+
+class DeviceUnregisterRequest(BaseModel):
+    """Request payload for unregistering an FCM push device."""
+    token: str
+
+
+class NotificationStatusResponse(BaseModel):
+    """Diagnostic response model for notification subsystem status."""
+    firebase_configured: bool
+    active_device_count: int
+    dispatch_mode: str = "DEMO_BROADCAST"

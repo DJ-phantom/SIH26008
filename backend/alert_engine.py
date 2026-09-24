@@ -1,3 +1,4 @@
+from backend.firebase_notifications import dispatch_alert_transition_async
 """Rule-Based Condition & Alert Engine for Conveyor Telemetry.
 
 SCIENTIFIC DISCLAIMER:
@@ -145,6 +146,15 @@ class AlertEngine:
                             state.active_alert_id = new_id
                             state.current_severity = "CRITICAL"
                             print(f"[AlertEngine] CRITICAL alert created #{new_id} for {device_id} {metric} = {value}{cfg['unit']}")
+                            dispatch_alert_transition_async(
+                                alert_id=new_id,
+                                transition="ALERT_OPENED",
+                                metric=metric,
+                                severity="CRITICAL",
+                                value=value,
+                                unit=cfg["unit"],
+                                device_id=device_id,
+                            )
                     else:
                         # Update existing active alert
                         if state.current_severity != "CRITICAL":
@@ -156,6 +166,15 @@ class AlertEngine:
                                 value=value,
                             )
                             print(f"[AlertEngine] Escalated alert #{state.active_alert_id} to CRITICAL for {device_id} {metric} = {value}{cfg['unit']}")
+                            dispatch_alert_transition_async(
+                                alert_id=state.active_alert_id,
+                                transition="ALERT_ESCALATED",
+                                metric=metric,
+                                severity="CRITICAL",
+                                value=value,
+                                unit=cfg["unit"],
+                                device_id=device_id,
+                            )
                         else:
                             update_alert(
                                 alert_id=state.active_alert_id,
@@ -185,6 +204,15 @@ class AlertEngine:
                                 state.active_alert_id = new_id
                                 state.current_severity = "WARNING"
                                 print(f"[AlertEngine] WARNING alert created #{new_id} for {device_id} {metric} = {value}{cfg['unit']} (after {REQUIRED_WARNING_COUNT} sustained readings)")
+                                dispatch_alert_transition_async(
+                                    alert_id=new_id,
+                                    transition="ALERT_OPENED",
+                                    metric=metric,
+                                    severity="WARNING",
+                                    value=value,
+                                    unit=cfg["unit"],
+                                    device_id=device_id,
+                                )
                     else:
                         # Active alert exists; refresh value & last_seen_at
                         update_alert(
@@ -202,8 +230,18 @@ class AlertEngine:
                     if state.active_alert_id is not None:
                         if state.consecutive_normal_count >= REQUIRED_RECOVERY_COUNT:
                             # 3 consecutive normal readings -> Resolve alert!
-                            resolve_alert(state.active_alert_id)
-                            print(f"[AlertEngine] Resolved alert #{state.active_alert_id} for {device_id} {metric} after {REQUIRED_RECOVERY_COUNT} consecutive safe readings.")
+                            resolved_id = state.active_alert_id
+                            resolve_alert(resolved_id)
+                            print(f"[AlertEngine] Resolved alert #{resolved_id} for {device_id} {metric} after {REQUIRED_RECOVERY_COUNT} consecutive safe readings.")
+                            dispatch_alert_transition_async(
+                                alert_id=resolved_id,
+                                transition="ALERT_RESOLVED",
+                                metric=metric,
+                                severity="NORMAL",
+                                value=value,
+                                unit=cfg["unit"],
+                                device_id=device_id,
+                            )
                             state.active_alert_id = None
                             state.current_severity = None
 

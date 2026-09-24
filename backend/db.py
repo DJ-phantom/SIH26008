@@ -79,6 +79,31 @@ def init_db():
 
     CREATE INDEX IF NOT EXISTS idx_alerts_active_device_metric ON alerts (is_active, device_id, metric);
     CREATE INDEX IF NOT EXISTS idx_alerts_started_at ON alerts (started_at DESC);
+
+    CREATE TABLE IF NOT EXISTS push_devices (
+        id BIGSERIAL PRIMARY KEY,
+        fcm_token TEXT UNIQUE NOT NULL,
+        platform VARCHAR(32) NOT NULL DEFAULT 'android',
+        device_label VARCHAR(128) NOT NULL DEFAULT 'SRIJAN Android Device',
+        is_active BOOLEAN NOT NULL DEFAULT TRUE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        last_registered_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    CREATE INDEX IF NOT EXISTS idx_push_devices_active ON push_devices (is_active);
+
+    CREATE TABLE IF NOT EXISTS notification_dispatches (
+        id BIGSERIAL PRIMARY KEY,
+        alert_id BIGINT NOT NULL,
+        transition VARCHAR(32) NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        recipient_count INT NOT NULL DEFAULT 0,
+        success_count INT NOT NULL DEFAULT 0,
+        failure_count INT NOT NULL DEFAULT 0,
+        metadata JSONB,
+        CONSTRAINT unique_alert_transition UNIQUE (alert_id, transition)
+    );
+    CREATE INDEX IF NOT EXISTS idx_dispatches_alert_transition ON notification_dispatches (alert_id, transition);
     """
     try:
         with connect_db(autocommit=True) as conn:
@@ -368,3 +393,161 @@ def get_alert_count() -> Dict[str, int]:
         return {"active": 0, "total": 0}
 
 
+
+
+# --- Notification & Alert Detail Helper Functions ---
+
+def get_alert_by_id(alert_id: int) -> Optional[Dict[str, Any]]:
+    """Retrieves a single alert event by ID."""
+    query = """
+    SELECT
+        id,
+        device_id,
+        metric,
+        severity,
+        title,
+        message,
+        value,
+        unit,
+        to_char(started_at, 'YYYY-MM-DD"T"HH24:MI:SSOF') AS started_at,
+        to_char(last_seen_at, 'YYYY-MM-DD"T"HH24:MI:SSOF') AS last_seen_at,
+        to_char(resolved_at, 'YYYY-MM-DD"T"HH24:MI:SSOF') AS resolved_at,
+        is_active
+    FROM alerts
+    WHERE id = %(alert_id)s;
+    """
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, {"alert_id": alert_id})
+                row = cur.fetchone()
+                if not row:
+                    return None
+                columns = [desc[0] for desc in cur.description]
+                return dict(zip(columns, row))
+    except Exception as e:
+        print(f"[Backend DB] Error fetching alert #{alert_id}: {e}")
+        return None
+
+
+def register_push_device(token: str, platform: str = "android", device_label: str = "SRIJAN Android Device") -> bool:
+    """Upserts an FCM push device registration setting is_active=TRUE."""
+    query = """
+    INSERT INTO push_devices (fcm_token, platform, device_label, is_active, created_at, updated_at, last_registered_at)
+    VALUES (%(token)s, %(platform)s, %(device_label)s, TRUE, NOW(), NOW(), NOW())
+    ON CONFLICT (fcm_token) DO UPDATE
+    SET is_active = TRUE,
+        platform = EXCLUDED.platform,
+        device_label = EXCLUDED.device_label,
+        last_registered_at = NOW(),
+        updated_at = NOW();
+    """
+    try:
+        with connect_db(autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, {"token": token, "platform": platform, "device_label": device_label})
+                return True
+    except Exception as e:
+        print(f"[Backend DB] Error registering push device: {e}")
+        return False
+
+
+def unregister_push_device(token: str) -> bool:
+    """Marks an FCM push device as inactive."""
+    query = """
+    UPDATE push_devices
+    SET is_active = FALSE, updated_at = NOW()
+    WHERE fcm_token = %(token)s;
+    """
+    try:
+        with connect_db(autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, {"token": token})
+                return cur.rowcount > 0
+    except Exception as e:
+        print(f"[Backend DB] Error unregistering push device: {e}")
+        return False
+
+
+def deactivate_push_device(token: str) -> bool:
+    """Deactivates invalid/expired FCM token."""
+    return unregister_push_device(token)
+
+
+def get_active_fcm_tokens() -> List[str]:
+    """Retrieves all active registered FCM tokens for demo broadcast mode."""
+    query = "SELECT fcm_token FROM push_devices WHERE is_active = TRUE ORDER BY id ASC;"
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                rows = cur.fetchall()
+                return [r[0] for r in rows if r[0]]
+    except Exception as e:
+        print(f"[Backend DB] Error fetching active FCM tokens: {e}")
+        return []
+
+
+def get_active_device_count() -> int:
+    """Returns total count of active registered FCM devices."""
+    query = "SELECT COUNT(*) FROM push_devices WHERE is_active = TRUE;"
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query)
+                row = cur.fetchone()
+                return row[0] if row else 0
+    except Exception as e:
+        print(f"[Backend DB] Error fetching active device count: {e}")
+        return 0
+
+
+def has_notification_been_dispatched(alert_id: int, transition: str) -> bool:
+    """Checks if a push notification transition has already been dispatched for this alert."""
+    query = "SELECT 1 FROM notification_dispatches WHERE alert_id = %(alert_id)s AND transition = %(transition)s;"
+    try:
+        with connect_db() as conn:
+            with conn.cursor() as cur:
+                cur.execute(query, {"alert_id": alert_id, "transition": transition})
+                return cur.fetchone() is not None
+    except Exception as e:
+        print(f"[Backend DB] Error checking dispatch status for alert #{alert_id} {transition}: {e}")
+        return False
+
+
+import json
+
+def record_notification_dispatch(
+    alert_id: int,
+    transition: str,
+    recipient_count: int,
+    success_count: int,
+    failure_count: int,
+    metadata: Optional[dict] = None,
+) -> bool:
+    """Records a push notification dispatch event in PostgreSQL for idempotency tracking."""
+    query = """
+    INSERT INTO notification_dispatches (
+        alert_id, transition, created_at, recipient_count, success_count, failure_count, metadata
+    ) VALUES (
+        %(alert_id)s, %(transition)s, NOW(), %(recipient_count)s, %(success_count)s, %(failure_count)s, %(metadata)s
+    ) ON CONFLICT (alert_id, transition) DO NOTHING;
+    """
+    try:
+        with connect_db(autocommit=True) as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    query,
+                    {
+                        "alert_id": alert_id,
+                        "transition": transition,
+                        "recipient_count": recipient_count,
+                        "success_count": success_count,
+                        "failure_count": failure_count,
+                        "metadata": json.dumps(metadata) if metadata else None,
+                    },
+                )
+                return True
+    except Exception as e:
+        print(f"[Backend DB] Error recording notification dispatch for alert #{alert_id} {transition}: {e}")
+        return False
