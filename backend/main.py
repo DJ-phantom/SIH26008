@@ -415,3 +415,34 @@ async def get_alert_by_id_endpoint(alert_id: int):
             detail=f"Alert #{alert_id} not found.",
         )
     return record
+
+
+# --- Demo Scenario Control REST Endpoint ---
+
+from simulator.sensor_simulator import Scenario
+
+@app.post(
+    "/api/demo/scenario",
+    tags=["Demo Simulation"],
+    responses={
+        200: {"description": "Demo telemetry scenario updated successfully"},
+        400: {"description": "Invalid scenario name"},
+    },
+)
+async def set_demo_scenario(
+    scenario: str = Query(..., description="Scenario name: NORMAL, HIGH_VIBRATION, MOTOR_OVERLOAD, BELT_MISALIGNMENT, SPLICE_DEGRADATION")
+):
+    """Updates active synthetic telemetry scenario for CloudDemoGenerator."""
+    try:
+        scen_enum = Scenario(scenario.strip().upper())
+        cloud_demo_generator.set_scenario(scen_enum)
+        return {
+            "status": "updated",
+            "active_scenario": scen_enum.value,
+            "device_id": DEVICE_ID,
+        }
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Invalid scenario '{scenario}'. Valid choices: NORMAL, HIGH_VIBRATION, MOTOR_OVERLOAD, BELT_MISALIGNMENT, SPLICE_DEGRADATION",
+        )

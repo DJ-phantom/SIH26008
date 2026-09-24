@@ -213,5 +213,65 @@ class TestFirebaseNotificationsAndAlerts(unittest.TestCase):
         )
 
 
+
+    @patch("backend.firebase_notifications.has_notification_been_dispatched", return_value=True)
+    @patch("backend.firebase_notifications.messaging.send_each_for_multicast")
+    def test_idempotency_prevents_duplicate_dispatch(self, mock_send, mock_has):
+        from backend.firebase_notifications import _dispatch_fcm_multicast_sync
+        with patch("backend.firebase_notifications.is_firebase_configured", return_value=True):
+            _dispatch_fcm_multicast_sync(
+                alert_id=42, transition="ALERT_OPENED", metric="alignment",
+                severity="WARNING", value=3.5, unit="mm", device_id="DEV1"
+            )
+            mock_send.assert_not_called()
+
+    @patch("backend.firebase_notifications.is_firebase_configured", return_value=True)
+    @patch("backend.firebase_notifications.has_notification_been_dispatched", return_value=False)
+    @patch("backend.firebase_notifications.get_active_fcm_tokens", return_value=["token_invalid"])
+    @patch("backend.firebase_notifications.deactivate_push_device")
+    @patch("backend.firebase_notifications.record_notification_dispatch")
+    @patch("backend.firebase_notifications.messaging.send_each_for_multicast")
+    def test_invalid_token_deactivates_device(
+        self, mock_send, mock_record, mock_deactivate, mock_tokens, mock_has, mock_cfg
+    ):
+        from backend.firebase_notifications import _dispatch_fcm_multicast_sync
+        from firebase_admin import messaging
+
+        mock_resp = MagicMock()
+        mock_resp.success = False
+        mock_resp.exception = messaging.UnregisteredError("token unregistered")
+        
+        mock_multicast_resp = MagicMock()
+        mock_multicast_resp.success_count = 0
+        mock_multicast_resp.failure_count = 1
+        mock_multicast_resp.responses = [mock_resp]
+        mock_send.return_value = mock_multicast_resp
+
+        _dispatch_fcm_multicast_sync(
+            alert_id=42, transition="ALERT_OPENED", metric="alignment",
+            severity="WARNING", value=3.5, unit="mm", device_id="DEV1"
+        )
+        mock_deactivate.assert_called_once_with("token_invalid")
+
+    @patch("backend.firebase_notifications.is_firebase_configured", return_value=True)
+    @patch("backend.firebase_notifications.has_notification_been_dispatched", return_value=False)
+    @patch("backend.firebase_notifications.get_active_fcm_tokens", return_value=["valid_token"])
+    @patch("backend.firebase_notifications.deactivate_push_device")
+    @patch("backend.firebase_notifications.record_notification_dispatch")
+    @patch("backend.firebase_notifications.messaging.send_each_for_multicast")
+    def test_temporary_network_failure_does_not_deactivate_device(
+        self, mock_send, mock_record, mock_deactivate, mock_tokens, mock_has, mock_cfg
+    ):
+        from backend.firebase_notifications import _dispatch_fcm_multicast_sync
+
+        mock_send.side_effect = ConnectionError("FCM network timeout")
+
+        _dispatch_fcm_multicast_sync(
+            alert_id=42, transition="ALERT_OPENED", metric="alignment",
+            severity="WARNING", value=3.5, unit="mm", device_id="DEV1"
+        )
+        mock_deactivate.assert_not_called()
+        mock_record.assert_called_once()
+
 if __name__ == "__main__":
     unittest.main()

@@ -18,30 +18,37 @@ class CloudDemoGenerator:
     """FastAPI Cloud Demo Telemetry Generator.
     
     Runs a background task inside FastAPI when CLOUD_DEMO=true.
-    Generates continuous synthetic telemetry in Scenario.NORMAL at ~1 Hz
+    Generates continuous synthetic telemetry in the active Scenario (default NORMAL) at ~1 Hz
     and routes every sample into the shared backend process_telemetry() pipeline.
-    Does not require Mosquitto, mqtt_publisher.py, or demo_controller.py.
     """
 
     def __init__(self, device_id: str = "ESP32-01", publish_interval: float = 1.0):
         self.device_id = device_id
         self.publish_interval = publish_interval
+        self.active_scenario = Scenario.NORMAL
         self.simulator = ConveyorSensorSimulator(device_id=device_id, initial_scenario=Scenario.NORMAL)
         self._running = False
         self._task: Optional[asyncio.Task] = None
 
+    def set_scenario(self, scenario: Scenario):
+        """Switches the active simulation scenario profile."""
+        if scenario != self.active_scenario:
+            self.active_scenario = scenario
+            self.simulator.set_scenario(scenario)
+            print(f"[CloudDemoGenerator] Switched active scenario to [{scenario.value}]")
+
     async def _run_loop(self):
         """Continuous async loop generating telemetry and feeding the shared pipeline."""
-        print(f"[CloudDemoGenerator] Starting synthetic telemetry loop for [{self.device_id}] (Scenario: NORMAL)...")
+        print(f"[CloudDemoGenerator] Starting synthetic telemetry loop for [{self.device_id}] (Active Scenario: {self.active_scenario.value})...")
         while self._running:
             try:
-                # 1. Ensure scenario is always NORMAL for public cloud demo
-                if self.simulator.scenario != Scenario.NORMAL:
-                    self.simulator.set_scenario(Scenario.NORMAL)
+                # 1. Ensure simulator matches active_scenario
+                if self.simulator.scenario != self.active_scenario:
+                    self.simulator.set_scenario(self.active_scenario)
 
                 # 2. Generate synthetic reading
                 raw_data = self.simulator.generate_telemetry()
-                raw_data["scenario"] = "NORMAL"
+                raw_data["scenario"] = self.active_scenario.value
 
                 # 3. Validate model
                 validated_data = TelemetryData.model_validate(raw_data)
