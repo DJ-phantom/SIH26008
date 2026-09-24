@@ -442,8 +442,13 @@ async def set_demo_scenario(
             detail="Demo scenario control is disabled when CLOUD_DEMO is False (Physical Hardware / MQTT Mode).",
         )
 
-    expected_secret = DEMO_CONTROL_SECRET.strip() if (DEMO_CONTROL_SECRET and DEMO_CONTROL_SECRET.strip()) else "srijan-demo-secret-2026"
-    if x_demo_secret != expected_secret:
+    if not DEMO_CONTROL_SECRET or not DEMO_CONTROL_SECRET.strip():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="DEMO_CONTROL_SECRET is not configured on server.",
+        )
+
+    if x_demo_secret != DEMO_CONTROL_SECRET:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid or missing X-Demo-Secret header.",
