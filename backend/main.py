@@ -13,7 +13,7 @@ from backend.db import (
 from contextlib import asynccontextmanager
 from typing import List, Optional
 
-from fastapi import FastAPI, HTTPException, Query, status
+from fastapi import FastAPI, Header, HTTPException, Query, status
 from fastapi.middleware.cors import CORSMiddleware
 
 from backend.alert_engine import alert_engine
@@ -22,6 +22,7 @@ from backend.cloud_demo import cloud_demo_generator
 from backend.condition_engine import condition_engine
 from backend.config import (
     CLOUD_DEMO,
+    DEMO_CONTROL_SECRET,
     DATA_SOURCE,
     DEVICE_ID,
     FRONTEND_ORIGINS,
@@ -431,13 +432,20 @@ from simulator.sensor_simulator import Scenario
     },
 )
 async def set_demo_scenario(
-    scenario: str = Query(..., description="Scenario name: NORMAL, HIGH_VIBRATION, MOTOR_OVERLOAD, BELT_MISALIGNMENT, SPLICE_DEGRADATION")
+    scenario: str = Query(..., description="Scenario name: NORMAL, HIGH_VIBRATION, MOTOR_OVERLOAD, BELT_MISALIGNMENT, SPLICE_DEGRADATION"),
+    x_demo_secret: Optional[str] = Header(None, alias="X-Demo-Secret"),
 ):
     """Updates active synthetic telemetry scenario for CloudDemoGenerator in CLOUD_DEMO mode."""
     if not CLOUD_DEMO:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Demo scenario control is disabled when CLOUD_DEMO is False (Physical Hardware / MQTT Mode).",
+        )
+
+    if DEMO_CONTROL_SECRET and x_demo_secret != DEMO_CONTROL_SECRET:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or missing X-Demo-Secret header.",
         )
 
     scen_str = scenario.strip().upper()

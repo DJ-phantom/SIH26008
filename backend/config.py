@@ -37,3 +37,5 @@ def get_data_source_mode() -> str:
     if DATA_SOURCE == "ESP32":
         return "Hardware Mode / ESP32 Telemetry"
     return "Synthetic Telemetry Mode"
+
+DEMO_CONTROL_SECRET = os.getenv("DEMO_CONTROL_SECRET", "srijan-demo-secret-2026")

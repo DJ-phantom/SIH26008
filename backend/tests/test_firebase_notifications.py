@@ -276,22 +276,27 @@ class TestFirebaseNotificationsAndAlerts(unittest.TestCase):
 
     @patch("backend.main.CLOUD_DEMO", False)
     def test_demo_scenario_forbidden_in_non_cloud_mode(self):
-        res = self.client.post("/api/demo/scenario?scenario=BELT_MISALIGNMENT")
+        res = self.client.post("/api/demo/scenario?scenario=BELT_MISALIGNMENT", headers={"X-Demo-Secret": "srijan-demo-secret-2026"})
         self.assertEqual(res.status_code, 403)
         self.assertIn("disabled when CLOUD_DEMO is False", res.json()["detail"])
 
     @patch("backend.main.CLOUD_DEMO", True)
     def test_demo_scenario_invalid_name_400(self):
-        res = self.client.post("/api/demo/scenario?scenario=INVALID_HACK")
+        res = self.client.post("/api/demo/scenario?scenario=INVALID_HACK", headers={"X-Demo-Secret": "srijan-demo-secret-2026"})
         self.assertEqual(res.status_code, 400)
         self.assertIn("Allowed choices", res.json()["detail"])
 
     @patch("backend.main.CLOUD_DEMO", True)
     @patch("backend.main.cloud_demo_generator.set_scenario")
     def test_demo_scenario_success(self, mock_set):
-        res = self.client.post("/api/demo/scenario?scenario=BELT_MISALIGNMENT")
+        res = self.client.post("/api/demo/scenario?scenario=BELT_MISALIGNMENT", headers={"X-Demo-Secret": "srijan-demo-secret-2026"})
         self.assertEqual(res.status_code, 200)
         self.assertEqual(res.json()["active_scenario"], "BELT_MISALIGNMENT")
+    @patch("backend.main.CLOUD_DEMO", True)
+    def test_demo_scenario_unauthorized_401(self):
+        res = self.client.post("/api/demo/scenario?scenario=BELT_MISALIGNMENT")
+        self.assertEqual(res.status_code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()
